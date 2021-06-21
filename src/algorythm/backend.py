@@ -50,8 +50,8 @@ def start_stream():
         dev = p.get_device_info_by_index(i)
         if dev['name'][:len(def_name)] == def_name:
             # Check loopback capability
-            waspi_check = (p.get_host_api_info_by_index(dev["hostApi"])["name"]).find("WASAPI") != -1
-            if waspi_check:
+            wasapi_check = (p.get_host_api_info_by_index(dev["hostApi"])["name"]).find("WASAPI") != -1
+            if wasapi_check:
                 found_loop = True 
                 break
     
