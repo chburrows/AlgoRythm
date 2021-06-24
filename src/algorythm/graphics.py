@@ -5,7 +5,7 @@ import win32con
 import win32gui
 
 import backend
-import settings
+from settings import Settings
 
 
 class AudioBar:
@@ -30,7 +30,7 @@ pygame.init()
 SCALE = 300
 
 size = (850, 450)
-screen = pygame.display.set_mode(size, pygame.NOFRAME)
+screen = pygame.display.set_mode(size)
 pygame.display.set_caption("AlgoRythm")
 clock = pygame.time.Clock()
 
@@ -43,6 +43,7 @@ win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE,
 # Set window transparency color
 win32gui.SetLayeredWindowAttributes(hwnd, win32api.RGB(*invis), 0, win32con.LWA_COLORKEY)
 
+# Connect to backend and create bars
 backend.start_stream()
 bars = []
 while len(bars) == 0:
@@ -54,8 +55,21 @@ while len(bars) == 0:
     for i in range(len(backend.last_freqs)):
         bars.append(AudioBar(bar_width * i, size[1], bar_width, (255,0,0)))
 
+# Font for user hints
+WHITE = (255, 255, 255)
+
+
+font_hint = pygame.font.SysFont(None, 20)
+font_hint2 = pygame.font.SysFont(None, 20)
+
+hint_imgs = [font_hint.render('Key Hints:', False, WHITE),
+    font_hint2.render('Press S for Settings', False, WHITE),
+    font_hint2.render('Press M to toggle window border', False, WHITE)]
+
+settings = Settings()
+
 run = True
-border = False
+border = True
 displaySettings = False
 while run:
     for event in pygame.event.get():
@@ -84,8 +98,13 @@ while run:
 
     #drawing logic - should be handled mostly in AudioBar draw
     screen.fill( invis )
+
     for bar in bars:
         bar.draw(screen)
+
+    if border:
+        for index, img in enumerate(hint_imgs):
+            screen.blit(img, (size[0]*.75 ,15+(20*index)))
 
     pygame.display.flip()
     clock.tick(60)
