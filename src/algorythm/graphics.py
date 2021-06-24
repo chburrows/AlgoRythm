@@ -27,7 +27,7 @@ pygame.init()
 
 #scale factor = maybe a non constant scale factor could be better
 # it looks like the low end consistently has higher intensity than the high end
-SCALE = 500
+SCALE = 300
 
 size = (850, 450)
 screen = pygame.display.set_mode(size, pygame.NOFRAME)
@@ -36,7 +36,7 @@ clock = pygame.time.Clock()
 
 invis = (255, 0, 128)
 
-# Win32 Layered window
+# Win32 Layered window (From https://stackoverflow.com/questions/550001/fully-transparent-windows-in-pygame)
 hwnd = pygame.display.get_wm_info()["window"]
 win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE,
                        win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE) | win32con.WS_EX_LAYERED)
@@ -63,18 +63,18 @@ while run:
         if event.type == pygame.QUIT:
             run = False
         if event.type == pygame.KEYDOWN:
+            # Press S to open settings
             if event.key == pygame.K_s:
                 displaySettings = True
             elif event.key == pygame.K_m:
+                # Press M to toggle window border
                 border = not border
                 if border:
                     screen = pygame.display.set_mode(size)
                 else:
                     screen = pygame.display.set_mode(size, pygame.NOFRAME)
-
-
         
-    while displaySettings:
+    if displaySettings:
         displaySettings, run = settings.draw(screen, clock, size)
 
 
@@ -89,5 +89,6 @@ while run:
 
     pygame.display.flip()
     clock.tick(60)
+    
 backend.stop_stream()
 pygame.quit()
