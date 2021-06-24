@@ -1,6 +1,12 @@
 import pygame
+#pywin32
+import win32api 
+import win32con
+import win32gui
+
 import backend
 import settings
+
 
 class AudioBar:
     def __init__(self, x, max_height, width, color):
@@ -21,12 +27,21 @@ pygame.init()
 
 #scale factor = maybe a non constant scale factor could be better
 # it looks like the low end consistently has higher intensity than the high end
-SCALE = 10
+SCALE = 500
 
-size = (700, 500)
-screen = pygame.display.set_mode(size)
+size = (850, 450)
+screen = pygame.display.set_mode(size, pygame.NOFRAME)
 pygame.display.set_caption("AlgoRythm")
 clock = pygame.time.Clock()
+
+invis = (255, 0, 128)
+
+# Win32 Layered window
+hwnd = pygame.display.get_wm_info()["window"]
+win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE,
+                       win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE) | win32con.WS_EX_LAYERED)
+# Set window transparency color
+win32gui.SetLayeredWindowAttributes(hwnd, win32api.RGB(*invis), 0, win32con.LWA_COLORKEY)
 
 backend.start_stream()
 bars = []
@@ -40,8 +55,9 @@ while len(bars) == 0:
         bars.append(AudioBar(bar_width * i, size[1], bar_width, (255,0,0)))
 
 run = True
+border = False
+displaySettings = False
 while run:
-    displaySettings = False
     for event in pygame.event.get():
         #close program if X button clicked
         if event.type == pygame.QUIT:
@@ -49,9 +65,17 @@ while run:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_s:
                 displaySettings = True
+            elif event.key == pygame.K_m:
+                border = not border
+                if border:
+                    screen = pygame.display.set_mode(size)
+                else:
+                    screen = pygame.display.set_mode(size, pygame.NOFRAME)
+
+
         
     while displaySettings:
-        displaySettings, run = settings.draw(screen, clock)
+        displaySettings, run = settings.draw(screen, clock, size)
 
 
     #update bars based on levels - have to adjust if fewer bars are used
@@ -59,7 +83,7 @@ while run:
         bars[i].update(backend.last_levels[i] * SCALE)
 
     #drawing logic - should be handled mostly in AudioBar draw
-    screen.fill( (0, 0, 0) )
+    screen.fill( invis )
     for bar in bars:
         bar.draw(screen)
 

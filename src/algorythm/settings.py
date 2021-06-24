@@ -1,6 +1,6 @@
 import pygame
 
-def draw(screen, clock):
+def draw(screen, clock, size):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             return False, False
@@ -8,7 +8,9 @@ def draw(screen, clock):
             if event.key == pygame.K_s:
                 return False, True
 
-    screen.fill( (50, 50, 50))
+    screen.fill( (30, 30, 30))
+
+    font = pygame.font.SysFont
 
     pygame.display.flip()
     clock.tick(20)
