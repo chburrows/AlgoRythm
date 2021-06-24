@@ -1,5 +1,6 @@
 import pygame
 import backend
+import settings
 
 class AudioBar:
     def __init__(self, x, max_height, width, color):
@@ -40,10 +41,18 @@ while len(bars) == 0:
 
 run = True
 while run:
+    displaySettings = False
     for event in pygame.event.get():
         #close program if X button clicked
         if event.type == pygame.QUIT:
             run = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_s:
+                displaySettings = True
+        
+    while displaySettings:
+        displaySettings, run = settings.draw(screen, clock)
+
 
     #update bars based on levels - have to adjust if fewer bars are used
     for i in range(len(backend.last_levels)):
