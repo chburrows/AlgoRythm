@@ -82,7 +82,6 @@ class TextInput:
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.check_collide(event.pos):
-                    print("Clicked on textbox!")
                     self.active = True
                 else:
                     self.active = False
