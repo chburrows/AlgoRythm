@@ -75,24 +75,27 @@ class Settings:
                         return False, True
 
             # prob a better way to do this but tired
-            if textInputs[0].update(events):
-                self.sensitivity = int(textInputs[0].get_text())
-            elif textInputs[1].update(events):
-                self.smoothing = int(textInputs[1].get_text())
-            elif textInputs[2].update(events):
-                self.multiplier = int(textInputs[2].get_text())
-            elif textInputs[3].update(events):
-                self.b_width = int(textInputs[3].get_text())
-            elif textInputs[4].update(events):
-                self.b_height = int(textInputs[4].get_text())
-            elif textInputs[5].update(events):
-                self.b_gap = int(textInputs[5].get_text())
-            elif textInputs[6].update(events):
-                self.b_count = int(textInputs[6].get_text())
-            elif textInputs[7].update(events):
-                hex_color = textInputs[7].get_text()
-                # Convert hex to rgb tuple
-                self.b_color = tuple(int(hex_color[i:i+2], 16) for i in (0,2,4))
+            try:
+                if textInputs[0].update(events):
+                    self.sensitivity = int(textInputs[0].get_text())
+                elif textInputs[1].update(events):
+                    self.smoothing = int(textInputs[1].get_text())
+                elif textInputs[2].update(events):
+                    self.multiplier = int(textInputs[2].get_text())
+                elif textInputs[3].update(events):
+                    self.b_width = int(textInputs[3].get_text())
+                elif textInputs[4].update(events):
+                    self.b_height = int(textInputs[4].get_text())
+                elif textInputs[5].update(events):
+                    self.b_gap = int(textInputs[5].get_text())
+                elif textInputs[6].update(events):
+                    self.b_count = int(textInputs[6].get_text())
+                elif textInputs[7].update(events):
+                    hex_color = textInputs[7].get_text()
+                    # Convert hex to rgb tuple
+                    self.b_color = tuple(int(hex_color[i:i+2], 16) for i in (0,2,4))
+            except ValueError:
+                print("Error: Invalid input, NaN.")
 
             screen.fill( (30, 30, 30, 150))
 
