@@ -9,11 +9,15 @@ from settings import Settings
 
 
 class AudioBar:
-    def __init__(self, x, max_height, width, color):
-        self.x = x
-        self.max_height = max_height
-        self.width = width
-        self.color = color
+    def __init__(self, settings, i):
+        self.index = i
+        self.update_properties(settings)
+    def update_properties(self, settings):
+        self.max_height = settings.b_height
+        self.width = settings.b_width
+        self.gap = settings.b_gap
+        self.color = settings.b_color
+        self.x = self.width * self.index + (self.index * self.gap)
     def update(self, intensity):
         #calculate y pos of bar based on normalized intensity from 0 to 1
         #could add velocity or some smoothing function here instead of directly translating instensity
@@ -24,10 +28,12 @@ class AudioBar:
 
 
 pygame.init()
+settings = Settings()
 
 #scale factor = maybe a non constant scale factor could be better
 # it looks like the low end consistently has higher intensity than the high end
-SCALE = 300
+# SCALE = 10
+# Scale has been replaced by settings.multiplier
 
 size = (850, 450)
 screen = pygame.display.set_mode(size)
@@ -46,18 +52,20 @@ win32gui.SetLayeredWindowAttributes(hwnd, win32api.RGB(*invis), 0, win32con.LWA_
 # Connect to backend and create bars
 backend.start_stream()
 bars = []
+
+settings.b_height = size[1]
+
 while len(bars) == 0:
     if len(backend.recent_frames) == 0:
         continue
     # creation of the AudioBar objects and add them to the list
     # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
-    bar_width = size[0] / len(backend.last_freqs)
+    settings.b_width = size[0] // len(backend.last_freqs)
     for i in range(len(backend.last_freqs)):
-        bars.append(AudioBar(bar_width * i, size[1], bar_width, (255,0,0)))
+        bars.append(AudioBar(settings, i))
 
 # Font for user hints
 WHITE = (255, 255, 255)
-
 
 font_hint = pygame.font.SysFont(None, 20)
 font_hint2 = pygame.font.SysFont(None, 20)
@@ -65,8 +73,6 @@ font_hint2 = pygame.font.SysFont(None, 20)
 hint_imgs = [font_hint.render('Key Hints:', False, WHITE),
     font_hint2.render('Press S for Settings', False, WHITE),
     font_hint2.render('Press M to toggle window border', False, WHITE)]
-
-settings = Settings()
 
 run = True
 border = True
@@ -90,11 +96,12 @@ while run:
         
     if displaySettings:
         displaySettings, run = settings.draw(screen, clock, size)
-
+        for bar in bars:
+            bar.update_properties(settings)
 
     #update bars based on levels - have to adjust if fewer bars are used
     for i in range(len(backend.last_levels)):
-        bars[i].update(backend.last_levels[i] * SCALE)
+        bars[i].update(backend.last_levels[i] * settings.multiplier)
 
     #drawing logic - should be handled mostly in AudioBar draw
     screen.fill( invis )
