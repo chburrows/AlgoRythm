@@ -7,7 +7,6 @@ import win32gui
 import backend
 from settings import Settings
 
-
 class AudioBar:
     def __init__(self, settings, i):
         self.index = i
@@ -26,13 +25,23 @@ class AudioBar:
         #draw the rectangle to the screen using pygame draw rect
         pygame.draw.rect(screen, self.color, (self.x, self.draw_y , self.width, self.max_height - self.draw_y), 0)
 
+def build_bars(settings):
+    bars = []
+    while len(bars) == 0:
+        if len(backend.recent_frames) == 0:
+            continue
+        # creation of the AudioBar objects and add them to the list
+        # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
+        settings.b_width = size[0] // len(backend.last_freqs)
+        for i in range(len(backend.last_freqs)):
+            bars.append(AudioBar(settings, i))
+    return bars
 
 pygame.init()
 settings = Settings()
 
 #scale factor = maybe a non constant scale factor could be better
 # it looks like the low end consistently has higher intensity than the high end
-# SCALE = 10
 # Scale has been replaced by settings.multiplier
 
 size = (850, 450)
@@ -50,19 +59,9 @@ win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE,
 win32gui.SetLayeredWindowAttributes(hwnd, win32api.RGB(*invis), 0, win32con.LWA_COLORKEY)
 
 # Connect to backend and create bars
-backend.start_stream()
-bars = []
-
+backend.start_stream(settings)
 settings.b_height = size[1]
-
-while len(bars) == 0:
-    if len(backend.recent_frames) == 0:
-        continue
-    # creation of the AudioBar objects and add them to the list
-    # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
-    settings.b_width = size[0] // len(backend.last_freqs)
-    for i in range(len(backend.last_freqs)):
-        bars.append(AudioBar(settings, i))
+bars = build_bars(settings)
 
 # Font for user hints
 WHITE = (255, 255, 255)
@@ -95,13 +94,21 @@ while run:
                     screen = pygame.display.set_mode(size, pygame.NOFRAME)
         
     if displaySettings:
+        # run after s key has been pressed
+        temp_chunk = settings.b_count
+        # run settings draw function and store resulting bools
         displaySettings, run = settings.draw(screen, clock, size)
+        # Update each bar with new settings
         for bar in bars:
             bar.update_properties(settings)
+        if temp_chunk != settings.b_count:
+            # If chunk was changed, restart stream and rebuld bars
+            backend.restart_stream(settings)
+            bars = build_bars(settings)
 
-    #update bars based on levels - have to adjust if fewer bars are used
-    for i in range(len(backend.last_levels)):
-        bars[i].update(backend.last_levels[i] * settings.multiplier)
+    #update bars based on levels and multiplier - have to adjust if fewer bars are used
+    for i, bar in enumerate(bars):
+        bar.update(backend.last_levels[i] * settings.multiplier)
 
     #drawing logic - should be handled mostly in AudioBar draw
     screen.fill( invis )
@@ -110,6 +117,7 @@ while run:
         bar.draw(screen)
 
     if border:
+        # Print the hint for 
         for index, img in enumerate(hint_imgs):
             screen.blit(img, (size[0]*.75 ,15+(20*index)))
 
