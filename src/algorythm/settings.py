@@ -47,8 +47,8 @@ class Settings:
         title_img = font.render('Settings', True, (200, 200, 200))
         vert_prop_img = font.render('Visualizer Properties', True, WHITE)
         
-        font_hint = pygame.font.SysFont(None, 26)
-        hint_img = font_hint.render("Press enter to confirm value.", True, WHITE)
+        font_hint = pygame.font.SysFont(None, 24)
+        hint_img = font_hint.render("Press enter to confirm value.", True, (200, 200, 200))
         
         # Options
         font_options = pygame.font.SysFont(None, 28)
@@ -99,14 +99,14 @@ class Settings:
             # Display title text
             screen.blit(title_img, (20, 20))
             screen.blit(vert_prop_img, (x_pos, 20))
-            screen.blit(hint_img, (x_pos, 40))
+            screen.blit(hint_img, (x_pos, 45))
             # Display option text images
             y_pos = 60
             for index, img in enumerate(opt_imgs):
                 y_pos += 30 + (30 if index == 3 else 0)
                 screen.blit(img, (x_pos, y_pos))
-                screen.blit(textInputs[index].get_surface(), (x_pos + 250, y_pos))
-                textInputs[index].set_pos((x_pos + 250, y_pos))
+                screen.blit(textInputs[index].get_surface(), (x_pos + 200, y_pos))
+                textInputs[index].set_pos((x_pos + 200, y_pos))
 
             pygame.display.flip()
             clock.tick(30)
