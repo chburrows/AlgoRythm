@@ -17,13 +17,16 @@ class AudioBar:
         self.gap = settings.b_gap
         self.color = settings.b_color
         self.x = self.width * self.index + (self.index * self.gap)
-    def update(self, intensity):
-        #calculate y pos of bar based on normalized intensity from 0 to 1
-        #could add velocity or some smoothing function here instead of directly translating instensity
-        self.draw_y = self.max_height * ( 1 - intensity)
+        self.draw_y = 0
+    def update(self, intensity, dt):
+        newPos = self.max_height * (1 - intensity)
+        accel = (newPos - self.draw_y) * settings.sensitivity
+        self.draw_y += accel * dt
+        self.draw_y = max(0, min(self.max_height,self.draw_y))
+        self.rect=[self.x, self.draw_y,self.width,self.max_height-self.draw_y]
     def draw(self, screen):
         #draw the rectangle to the screen using pygame draw rect
-        pygame.draw.rect(screen, self.color, (self.x, self.draw_y , self.width, self.max_height - self.draw_y), 0)
+        pygame.draw.rect(screen, self.color, self.rect, 0)
 
 def build_bars(settings):
     bars = []
@@ -73,10 +76,16 @@ hint_imgs = [font_hint.render('Key Hints:', False, WHITE),
     font_hint2.render('Press S for Settings', False, WHITE),
     font_hint2.render('Press M to toggle window border', False, WHITE)]
 
+t = pygame.time.get_ticks()
+getTicksLastFrame = t
+
 run = True
 border = True
 displaySettings = False
 while run:
+    t = pygame.time.get_ticks()
+    deltaTime = (t - getTicksLastFrame) / 1000.0
+    getTicksLastFrame = t
     for event in pygame.event.get():
         #close program if X button clicked
         if event.type == pygame.QUIT:
@@ -108,7 +117,7 @@ while run:
 
     #update bars based on levels and multiplier - have to adjust if fewer bars are used
     for i, bar in enumerate(bars):
-        bar.update(backend.last_levels[i] * settings.multiplier)
+        bar.update(backend.last_levels[i] * settings.multiplier, deltaTime)
 
     #drawing logic - should be handled mostly in AudioBar draw
     screen.fill( invis )
