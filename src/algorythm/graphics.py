@@ -20,7 +20,7 @@ class AudioBar:
         self.draw_y = 0
     def update(self, intensity, dt):
         newPos = self.max_height * (1 - intensity)
-        accel = (newPos - self.draw_y) * settings.sensitivity
+        accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height,self.draw_y))
         self.rect=[self.x, self.draw_y,self.width,self.max_height-self.draw_y]

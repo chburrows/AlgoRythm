@@ -4,7 +4,7 @@ import pygame_textinput as pytxt
 # Textbox reference https://stackoverflow.com/questions/46390231/how-can-i-create-a-text-input-box-with-pygame
 
 class Settings:
-    def __init__(self, sensitivity = 5, smoothing = 0, multiplier = 15, b_width = 15, b_height = 150, b_gap = 0, b_count = 128, b_color = (255, 0, 0)):
+    def __init__(self, sensitivity = 0, smoothing = 5, multiplier = 15, b_width = 15, b_height = 150, b_gap = 0, b_count = 128, b_color = (255, 0, 0)):
         # All are public
         self.sensitivity = sensitivity
         self.smoothing = smoothing
@@ -53,7 +53,7 @@ class Settings:
         # Options
         font_options = pygame.font.SysFont(None, 28)
 
-        opt_imgs = [font_options.render('Sensitivity:', True, WHITE),
+        opt_imgs = [font_options.render('Sensitivity (db):', True, WHITE),
             font_options.render('Smoothing Level:', True, WHITE),
             font_options.render('Multiplier:', True, WHITE),
             font_options.render('Bar Width:', True, WHITE),
