@@ -20,6 +20,6 @@ def search_for_id(track_name):
 
 #  get audio features
 def get_audio_features(track_id):
-    #  need to finish
-
-
+    features = sp.audio_features(search_for_id(track_name=track_name))
+    return features
+    
