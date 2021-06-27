@@ -21,7 +21,8 @@ class Settings:
     
     def draw(self, screen, clock, size):
         WHITE = (255, 255, 255)
-
+        BACK_COLOR = (30, 30, 30)
+        GRAY = (200, 200, 200)
         width, height = size
 
         # Convert rgb to hex
@@ -44,23 +45,23 @@ class Settings:
 
         # Titles
         font = pygame.font.SysFont(None, 32)
-        title_img = font.render('Settings', True, (200, 200, 200))
-        vert_prop_img = font.render('Visualizer Properties', True, WHITE)
+        title_img = font.render('Settings', True, GRAY, BACK_COLOR)
+        vert_prop_img = font.render('Visualizer Properties', True, WHITE, BACK_COLOR)
         
-        font_hint = pygame.font.SysFont(None, 24)
-        hint_img = font_hint.render("Press enter to confirm value.", True, (200, 200, 200))
+        font_hint = pygame.font.SysFont(None, 24, italic=True)
+        hint_img = font_hint.render("Press enter to confirm value.", True, GRAY, BACK_COLOR)
         
         # Options
         font_options = pygame.font.SysFont(None, 28)
 
-        opt_imgs = [font_options.render('Sensitivity:', True, WHITE),
-            font_options.render('Smoothing Level:', True, WHITE),
-            font_options.render('Multiplier:', True, WHITE),
-            font_options.render('Bar Width:', True, WHITE),
-            font_options.render('Bar Height:', True, WHITE),
-            font_options.render('Bar Gap:', True, WHITE),
-            font_options.render('Bar Count:', True, WHITE),
-            font_options.render('Bar Color (Hex):', True, WHITE)]
+        opt_imgs = [font_options.render('Sensitivity:', True, WHITE, BACK_COLOR),
+            font_options.render('Smoothing Level:', True, WHITE, BACK_COLOR),
+            font_options.render('Multiplier:', True, WHITE, BACK_COLOR),
+            font_options.render('Bar Width:', True, WHITE, BACK_COLOR),
+            font_options.render('Bar Height:', True, WHITE, BACK_COLOR),
+            font_options.render('Bar Gap:', True, WHITE, BACK_COLOR),
+            font_options.render('Bar Count:', True, WHITE, BACK_COLOR),
+            font_options.render('Bar Color (Hex):', True, WHITE, BACK_COLOR)]
 
 
         x_pos = width // 3 + 20
@@ -97,7 +98,7 @@ class Settings:
             except ValueError:
                 print("Error: Invalid input, NaN.")
 
-            screen.fill( (30, 30, 30, 150))
+            screen.fill( BACK_COLOR )
 
             # Display title text
             screen.blit(title_img, (20, 20))

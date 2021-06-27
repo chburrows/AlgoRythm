@@ -38,6 +38,7 @@ def build_bars(settings):
     return bars
 
 pygame.init()
+pygame.font.init()
 settings = Settings()
 
 #scale factor = maybe a non constant scale factor could be better
@@ -49,30 +50,44 @@ screen = pygame.display.set_mode(size)
 pygame.display.set_caption("AlgoRythm")
 clock = pygame.time.Clock()
 
-invis = (255, 0, 128)
+INVIS = (1,0,1)
 
 # Win32 Layered window (From https://stackoverflow.com/questions/550001/fully-transparent-windows-in-pygame)
 hwnd = pygame.display.get_wm_info()["window"]
 win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE,
                        win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE) | win32con.WS_EX_LAYERED)
 # Set window transparency color
-win32gui.SetLayeredWindowAttributes(hwnd, win32api.RGB(*invis), 0, win32con.LWA_COLORKEY)
+win32gui.SetLayeredWindowAttributes(hwnd, win32api.RGB(*INVIS), 0, win32con.LWA_COLORKEY)
 
 # Connect to backend and create bars
 backend.start_stream(settings)
-settings.b_height = size[1]
+settings.b_height = size[1]-60
 bars = build_bars(settings)
 
 # Font for user hints
 WHITE = (255, 255, 255)
 
-font_hint = pygame.font.SysFont(None, 20)
-font_hint2 = pygame.font.SysFont(None, 20)
+font_hint = pygame.font.SysFont(None, 24)
+font_hint2 = pygame.font.SysFont(None, 22, italic=True)
 
-hint_imgs = [font_hint.render('Key Hints:', False, WHITE),
-    font_hint2.render('Press S for Settings', False, WHITE),
-    font_hint2.render('Press M to toggle window border', False, WHITE)]
+hint_imgs = [font_hint.render('Key Hints:', True, WHITE, INVIS),
+    font_hint2.render('Press S for Settings', True, WHITE, INVIS),
+    font_hint2.render('Press M to toggle window border', True, WHITE, INVIS)]
 
+# Song Desciption Text
+# Allow for custom fonts and font size in future
+custom_font = None
+artist_size, title_size = text_sizes = (48, 36)
+font_artist = pygame.font.SysFont(custom_font, artist_size, bold=True)
+font_title = pygame.font.SysFont(custom_font, title_size, bold=True)
+
+# Render song text
+txt_artist = 'Tyler, The Creator'
+txt_title = 'HOT WIND BLOWS'
+artist_img = font_artist.render(txt_artist, True, WHITE, INVIS)
+title_img = font_title.render(txt_title, True, WHITE, INVIS)
+
+# Main PyGame render loop
 run = True
 border = True
 displaySettings = False
@@ -110,16 +125,21 @@ while run:
     for i, bar in enumerate(bars):
         bar.update(backend.last_levels[i] * settings.multiplier)
 
-    #drawing logic - should be handled mostly in AudioBar draw
-    screen.fill( invis )
+    # drawing logic - should be handled mostly in AudioBar draw
+    screen.fill( INVIS )
 
+    # Draw each bar
     for bar in bars:
         bar.draw(screen)
 
     if border:
-        # Print the hint for 
+        # Print each hint text if the border is enabled
         for index, img in enumerate(hint_imgs):
-            screen.blit(img, (size[0]*.75 ,15+(20*index)))
+            screen.blit(img, (size[0]*.75-30 ,15+(22*index)))
+
+    # Print song text
+    screen.blit(artist_img, (0, size[1]-sum(text_sizes)*.75))
+    screen.blit(title_img, (0, size[1]-title_size*.75))
 
     pygame.display.flip()
     clock.tick(60)
