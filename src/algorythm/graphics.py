@@ -77,13 +77,13 @@ hint_imgs = [font_hint.render('Key Hints:', True, WHITE, INVIS),
 # Song Desciption Text
 # Allow for custom fonts and font size in future
 custom_font = None
-artist_size, title_size = text_sizes = (48, 36)
+artist_size, title_size = text_sizes = (48, 32)
 font_artist = pygame.font.SysFont(custom_font, artist_size, bold=True)
 font_title = pygame.font.SysFont(custom_font, title_size, bold=True)
 
 # Render song text
-txt_artist = 'Tyler, The Creator'
-txt_title = 'HOT WIND BLOWS'
+txt_artist = 'ARTIST'
+txt_title = 'SONG TITLE'
 artist_img = font_artist.render(txt_artist, True, WHITE, INVIS)
 title_img = font_title.render(txt_title, True, WHITE, INVIS)
 
@@ -138,8 +138,8 @@ while run:
             screen.blit(img, (size[0]*.75-30 ,15+(22*index)))
 
     # Print song text
-    screen.blit(artist_img, (0, size[1]-sum(text_sizes)*.75))
-    screen.blit(title_img, (0, size[1]-title_size*.75))
+    screen.blit(artist_img, (0, size[1]-sum(text_sizes)*.70))
+    screen.blit(title_img, (0, size[1]-title_size*.65))
 
     pygame.display.flip()
     clock.tick(60)
