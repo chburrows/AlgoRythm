@@ -5,9 +5,9 @@ import pygame_textinput as pytxt
 
 class Settings:
     def __init__(self, 
-            sensitivity = 0, smoothing = 0, multiplier = 100, 
+            sensitivity = 0, smoothing = 0, multiplier = 25, 
             b_width = 15, b_height = 150, b_gap = 2, b_count = 64, b_color = (255, 255, 255), 
-            artist_size = 48, title_size = 32, text_color = (255, 255, 255)
+            artist_size = 64, title_size = 42, text_color = (255, 255, 255)
         ):
         # All are public
         # Vis Settings

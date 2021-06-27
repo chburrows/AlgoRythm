@@ -34,7 +34,6 @@ def build_bars(settings):
         # creation of the AudioBar objects and add them to the list
         # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
         settings.b_width = ceil((size[0] - (settings.b_count * settings.b_gap)) / len(backend.last_freqs))
-        print(len(backend.last_freqs))
         for i in range(len(backend.last_freqs)):
             bars.append(AudioBar(settings, i))
     return bars
@@ -61,11 +60,6 @@ win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE,
 # Set window transparency color
 win32gui.SetLayeredWindowAttributes(hwnd, win32api.RGB(*INVIS), 0, win32con.LWA_COLORKEY)
 
-# Connect to backend and create bars
-backend.start_stream(settings)
-settings.b_height = size[1]-60
-bars = build_bars(settings)
-
 # Font for user hints
 WHITE = (255, 255, 255)
 
@@ -89,6 +83,11 @@ txt_title = 'SONG TITLE'
 txt_color = settings.text_color
 artist_img = font_artist.render(txt_artist, True, txt_color, INVIS)
 title_img = font_title.render(txt_title, True, txt_color, INVIS)
+
+# Connect to backend and create bars
+backend.start_stream(settings)
+settings.b_height = size[1] - (artist_img.get_height() + title_img.get_height())
+bars = build_bars(settings)
 
 # Main PyGame render loop
 run = True
@@ -116,6 +115,12 @@ while run:
         temp_chunk = settings.b_count
         # run settings draw function and store resulting bools
         displaySettings, run = settings.draw(screen, clock, size)
+        # Update Text Sizes and color
+        font_artist = pygame.font.SysFont(custom_font, settings.artist_size, bold=True)
+        font_title = pygame.font.SysFont(custom_font, settings.title_size, bold=True)
+        artist_img = font_artist.render(txt_artist, True, settings.text_color, INVIS)
+        title_img = font_title.render(txt_title, True, settings.text_color, INVIS)
+        settings.b_height = size[1] - (artist_img.get_height() + title_img.get_height())
         # Update each bar with new settings
         for bar in bars:
             bar.update_properties(settings)
@@ -141,8 +146,8 @@ while run:
             screen.blit(img, (size[0]*.75-30 ,15+(22*index)))
 
     # Print song text
-    screen.blit(artist_img, (0, size[1]-sum(text_sizes)*.70))
-    screen.blit(title_img, (0, size[1]-title_size*.65))
+    screen.blit(artist_img, (0, size[1]-(artist_img.get_height()+title_img.get_height())))
+    screen.blit(title_img, (0, size[1]-title_img.get_height()))
 
     pygame.display.flip()
     clock.tick(60)
