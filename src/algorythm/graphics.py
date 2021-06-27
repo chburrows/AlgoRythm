@@ -1,4 +1,5 @@
 import pygame
+from math import ceil
 #pywin32
 import win32api 
 import win32con
@@ -32,7 +33,8 @@ def build_bars(settings):
             continue
         # creation of the AudioBar objects and add them to the list
         # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
-        settings.b_width = size[0] // len(backend.last_freqs)
+        settings.b_width = ceil((size[0] - (settings.b_count * settings.b_gap)) / len(backend.last_freqs))
+        print(len(backend.last_freqs))
         for i in range(len(backend.last_freqs)):
             bars.append(AudioBar(settings, i))
     return bars
@@ -77,15 +79,16 @@ hint_imgs = [font_hint.render('Key Hints:', True, WHITE, INVIS),
 # Song Desciption Text
 # Allow for custom fonts and font size in future
 custom_font = None
-artist_size, title_size = text_sizes = (48, 32)
+artist_size, title_size = text_sizes = (settings.artist_size, settings.title_size)
 font_artist = pygame.font.SysFont(custom_font, artist_size, bold=True)
 font_title = pygame.font.SysFont(custom_font, title_size, bold=True)
 
 # Render song text
 txt_artist = 'ARTIST'
 txt_title = 'SONG TITLE'
-artist_img = font_artist.render(txt_artist, True, WHITE, INVIS)
-title_img = font_title.render(txt_title, True, WHITE, INVIS)
+txt_color = settings.text_color
+artist_img = font_artist.render(txt_artist, True, txt_color, INVIS)
+title_img = font_title.render(txt_title, True, txt_color, INVIS)
 
 # Main PyGame render loop
 run = True

@@ -6,7 +6,7 @@ import pygame_textinput as pytxt
 class Settings:
     def __init__(self, 
             sensitivity = 0, smoothing = 0, multiplier = 100, 
-            b_width = 15, b_height = 150, b_gap = 0, b_count = 128, b_color = (255, 255, 255), 
+            b_width = 15, b_height = 150, b_gap = 2, b_count = 64, b_color = (255, 255, 255), 
             artist_size = 48, title_size = 32, text_color = (255, 255, 255)
         ):
         # All are public
@@ -105,9 +105,9 @@ class Settings:
                 elif text_inputs[7].update(events):
                     self.b_color = hex_to_rgb(text_inputs[7].get_text())
                 elif song_inputs[0].update(events):
-                    self.artist_size = song_inputs[0].get_text()
+                    self.artist_size = int(song_inputs[0].get_text())
                 elif song_inputs[1].update(events):
-                    self.title_size = song_inputs[1].get_text()
+                    self.title_size = int(song_inputs[1].get_text())
                 elif song_inputs[2].update(events):
                     self.text_color = hex_to_rgb(song_inputs[2].get_text())
             except ValueError:
