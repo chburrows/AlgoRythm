@@ -39,7 +39,7 @@ def callback(in_data, frame_count, time_info, status):
 
 def start_stream(settings):
     global stream,p,chunk
-    chunk = settings.b_count
+    chunk = settings.b_count * 2 - 1
 
     for i in range(p.get_device_count()):
         dev = p.get_device_info_by_index(i)
