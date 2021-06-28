@@ -14,3 +14,6 @@ Project Repository link: https://github.com/cburrows1/AlgoRythm
 - If on windows enable Stereo mix: (other OS support coming soon)
   - Control panel -> Hardware and Sound -> Sound -> Recording -> Stereo Mix -> \*Right Click\* Enable
 - If Stereo Mix does not appear under recording devices, user must download the device from RealTek. Link to download support video: https://youtu.be/Bd3moKLV5sE
+- Download the wheel package from our release list
+- Navigate to the directory where you just downloaded the package and install with `pip install <filename>.whl`
+- Run with `py -m algorythm`
