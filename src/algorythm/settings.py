@@ -34,7 +34,13 @@ class Settings:
         pickle.dump(self, savefile)
         savefile.close()
         return None
-    
+
+    def load(self, filename):
+        savefile = open(filename, 'rb')
+        self = pickle.load(savefile)
+        savefile.close()
+        return None
+
     def draw(self, screen, clock, size):
         WHITE = (255, 255, 255)
         BACK_COLOR = (30, 30, 30)
