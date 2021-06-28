@@ -30,16 +30,16 @@ class Settings:
 
     def save(self, filename):
         # pickle and save settings to file
-        savefile = open(filename, 'ab')
+        savefile = open(filename, 'wb')
         pickle.dump(self, savefile)
         savefile.close()
         return None
 
     def load(self, filename):
         savefile = open(filename, 'rb')
-        self = pickle.load(savefile)
+        temp = pickle.load(savefile)
         savefile.close()
-        return None
+        return temp
 
     def draw(self, screen, clock, size):
         WHITE = (255, 255, 255)
