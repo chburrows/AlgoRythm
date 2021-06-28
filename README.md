@@ -20,8 +20,11 @@ Project Repository link: https://github.com/cburrows1/AlgoRythm
 - If on Windows enable Stereo mix: (other OS support coming soon)
   - Control panel -> Hardware and Sound -> Sound -> Recording -> Stereo Mix -> \*Right Click\* Enable
 - If Stereo Mix does not appear under recording devices, user must download the device from RealTek. Link to download support video: https://youtu.be/Bd3moKLV5sE
-- If no bars appear, even with Stereo Mix enabled, a USB DAC or audio device is likely interfering and bypassing RealTek. Unplug that device and connect to AUX instead.
+- Download the wheel package from our release list
+- Navigate to the directory where you just downloaded the package and install with `pip install <filename>.whl`
 
 ## Execution of program
-- Run the program in Windows Powershell via ```python .\src\algorythm\graphics.py``` from the main project directory.
+- Run with `py -m algorythm`
 - Changes to settings are saved to a file, _algorythm_settings_, in the main project directory.
+- If no bars appear, even with Stereo Mix enabled, a USB DAC or audio device is likely interfering and bypassing RealTek. Unplug that device and connect to AUX instead.
+
