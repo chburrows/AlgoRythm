@@ -1,5 +1,6 @@
 import pygame
 import pygame_textinput as pytxt
+import pickle
 
 # Textbox reference https://stackoverflow.com/questions/46390231/how-can-i-create-a-text-input-box-with-pygame
 
@@ -27,8 +28,11 @@ class Settings:
         self.title_size = title_size
         self.text_color = text_color
 
-    def save(self, file):
+    def save(self, filename):
         # pickle and save settings to file
+        savefile = open(filename, 'ab')
+        pickle.dump(self, savefile)
+        savefile.close()
         return None
     
     def draw(self, screen, clock, size):
