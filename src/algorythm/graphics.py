@@ -1,8 +1,9 @@
-import pygame
 from math import ceil
 
 import collect_media_info as media
-import asyncio
+
+import pygame
+import threading
 
 #pywin32
 import win32api 
@@ -45,25 +46,27 @@ def build_bars(settings, width):
             bars.append(AudioBar(settings, i))
     return bars
 
-def get_song_imgs(settings, fonts):
-    # Render song text
-    try:
-        txt_title, txt_artist = asyncio.run(media.collect_title_artist())
-    except:
-        #print("Error calling song info.")
-        txt_title, txt_artist = ("Title", "Artist")
 
+def get_song_info():
+    global txt_title, txt_artist
+    txt_title, txt_artist =  media.collect_title_artist()
+
+def get_song_imgs(settings, fonts):
+    global txt_artist, txt_title
+    # Render song text
     font_artist, font_title = fonts
     txt_color = settings.text_color
 
     artist_img = font_artist.render(txt_artist, True, txt_color, INVIS)
     title_img = font_title.render(txt_title, True, txt_color, INVIS)
-    
     return artist_img, title_img
+
 
 # Globals
 INVIS = (1,0,1)
 WHITE = (255, 255, 255)
+
+txt_title, txt_artist = ("Title", "Artist")
 
 def main():
     pygame.init()
@@ -78,7 +81,6 @@ def main():
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption("AlgoRythm")
     clock = pygame.time.Clock()
-
 
     # Win32 Layered window (From https://stackoverflow.com/questions/550001/fully-transparent-windows-in-pygame)
     hwnd = pygame.display.get_wm_info()["window"]
@@ -96,37 +98,58 @@ def main():
         font_hint2.render('Press M to toggle window border', True, WHITE, INVIS)]
 
     # Song Desciption Text
-    # Allow for custom fonts and font size in future
+    # Allow for custom fonts in future
+
     custom_font = None
     artist_size, title_size = (settings.artist_size, settings.title_size)
     font_artist = pygame.font.SysFont(custom_font, artist_size, bold=True)
     font_title = pygame.font.SysFont(custom_font, title_size, bold=True)
     song_fonts = font_artist, font_title
 
-    artist_img, title_img = get_song_imgs(settings, song_fonts)
 
-    # Track ticks
-    t = pygame.time.get_ticks()
-    getTicksLastFrame = t
+    # Create thread for getting song info
+    t = threading.Thread(target=get_song_info)
+    t.start()
+    t.join()
+
+    # Render default text images
+    artist_img, title_img = get_song_imgs(settings, song_fonts)
 
     # Connect to backend and create bars
     backend.start_stream(settings)
     settings.b_height = size[1] - (artist_img.get_height() + title_img.get_height())
     bars = build_bars(settings, size[0])
 
+    # Create custom event for retrieving song info
+    GET_SONG = pygame.event.custom_type()
+    SONG_EVENT = pygame.event.Event(GET_SONG)
+    pygame.time.set_timer(SONG_EVENT, 3000) # Time in ms in-between song gathering
+
+    # Track ticks
+    t = pygame.time.get_ticks()
+    getTicksLastFrame = t
+
     # Main PyGame render loop
     run = True
     border = True
     displaySettings = False
+    last_song_title = txt_title
     while run:
+        # Track ticks for smoothing
         t = pygame.time.get_ticks()
         deltaTime = (t - getTicksLastFrame) / 1000.0
         getTicksLastFrame = t
+
         for event in pygame.event.get():
-            #close program if X button clicked
-            if event.type == pygame.QUIT:
+            if event.type == GET_SONG:
+                # Check for new song info
+                last_song_title = txt_title
+                t = threading.Thread(target=get_song_info)
+                t.start()
+            elif event.type == pygame.QUIT:
+                #close program if X button clicked
                 run = False
-            if event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN:
                 # Press S to open settings
                 if event.key == pygame.K_s:
                     displaySettings = True
@@ -137,6 +160,10 @@ def main():
                         screen = pygame.display.set_mode(size)
                     else:
                         screen = pygame.display.set_mode(size, pygame.NOFRAME)
+
+        if last_song_title != txt_title:
+            # Check to see if the song changed, if so, re-render the text
+            artist_img, title_img = get_song_imgs(settings, song_fonts)
             
         if displaySettings:
             # run after s key has been pressed
@@ -146,7 +173,8 @@ def main():
             # Update Text Sizes and color
             font_artist = pygame.font.SysFont(custom_font, settings.artist_size, bold=True)
             font_title = pygame.font.SysFont(custom_font, settings.title_size, bold=True)
-            artist_img, title_img = get_song_imgs(settings, (font_artist, font_title))
+            song_fonts = font_artist, font_title
+            artist_img, title_img = get_song_imgs(settings, song_fonts)
             settings.b_height = size[1] - (artist_img.get_height() + title_img.get_height())
             # Update each bar with new settings
             for bar in bars:
