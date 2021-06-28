@@ -1,4 +1,5 @@
 from math import ceil
+from os.path import isfile
 
 import algorythm.collect_media_info as media
 
@@ -75,6 +76,8 @@ def main():
     pygame.init()
     pygame.font.init()
     settings = Settings()
+    if isfile("./algorythm_settings"):
+        settings = settings.load("algorythm_settings")
 
     #scale factor = maybe a non constant scale factor could be better
     # it looks like the low end consistently has higher intensity than the high end
@@ -188,6 +191,7 @@ def main():
                 # If chunk was changed, restart stream and rebuld bars
                 backend.restart_stream(settings)
                 bars = build_bars(settings, size[0])
+            settings.save("algorythm_settings")
 
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
         for i, bar in enumerate(bars):
