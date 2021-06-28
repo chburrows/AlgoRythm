@@ -41,10 +41,16 @@ def start_stream(settings):
     global stream,p,chunk
     chunk = settings.b_count * 3 - 1
 
+    found_stereo = False
     for i in range(p.get_device_count()):
         dev = p.get_device_info_by_index(i)
         if ('Stereo Mix' in dev['name'] and dev['hostApi'] == 3):
             dev_index = dev['index']
+            found_stereo = True
+    if not found_stereo:
+        dev_index = p.get_default_input_device_info()['index']
+        print("Unable to find Stereo Mix device, using default Microphone instead.")
+
     stream = p.open(format = FORMAT,
                     channels = CHANNELS,
                     rate = RATE,
