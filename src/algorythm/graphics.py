@@ -23,13 +23,14 @@ class AudioBar:
         self.gap = settings.b_gap
         self.color = settings.b_color
         self.x = self.width * self.index + (self.index * self.gap)
-        self.draw_y = 0
-    def update(self, settings, intensity, dt):
+        self.draw_y = self.max_height
+    def update(self, settings, intensity, dt, text_gap):
         newPos = self.max_height * (1 - intensity)
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height,self.draw_y))
-        self.rect=[self.x, self.draw_y,self.width,self.max_height-self.draw_y]
+        bar_height = self.max_height-self.draw_y
+        self.rect=[self.x, (size[1]-self.max_height-text_gap)+self.draw_y,self.width, bar_height]
     def draw(self, screen):
         #draw the rectangle to the screen using pygame draw rect
         pygame.draw.rect(screen, self.color, self.rect, 0)
@@ -65,6 +66,8 @@ def get_song_imgs(settings, fonts):
 # Globals
 INVIS = (1,0,1)
 WHITE = (255, 255, 255)
+size = (850, 450)
+
 
 txt_title, txt_artist = ("Title", "Artist")
 
@@ -77,7 +80,6 @@ def main():
     # it looks like the low end consistently has higher intensity than the high end
     # Scale has been replaced by settings.multiplier
 
-    size = (850, 450)
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption("AlgoRythm")
     clock = pygame.time.Clock()
@@ -168,14 +170,17 @@ def main():
         if displaySettings:
             # run after s key has been pressed
             temp_chunk = settings.b_count
+            temp_text = (settings.artist_size, settings.title_size, settings.text_color) 
             # run settings draw function and store resulting bools
             displaySettings, run = settings.draw(screen, clock, size)
             # Update Text Sizes and color
-            font_artist = pygame.font.SysFont(custom_font, settings.artist_size, bold=True)
-            font_title = pygame.font.SysFont(custom_font, settings.title_size, bold=True)
-            song_fonts = font_artist, font_title
-            artist_img, title_img = get_song_imgs(settings, song_fonts)
-            settings.b_height = size[1] - (artist_img.get_height() + title_img.get_height())
+            if temp_text != (settings.artist_size, settings.title_size, settings.text_color):
+                font_artist = pygame.font.SysFont(custom_font, settings.artist_size, bold=True)
+                font_title = pygame.font.SysFont(custom_font, settings.title_size, bold=True)
+                song_fonts = font_artist, font_title
+                artist_img, title_img = get_song_imgs(settings, song_fonts)
+                if temp_text[:2] != (settings.artist_size, settings.title_size):
+                    settings.b_height = size[1] - (artist_img.get_height() + title_img.get_height())
             # Update each bar with new settings
             for bar in bars:
                 bar.update_properties(settings)
@@ -186,7 +191,7 @@ def main():
 
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
         for i, bar in enumerate(bars):
-            bar.update(settings, backend.last_levels[i] * settings.multiplier, deltaTime)
+            bar.update(settings, backend.last_levels[i] * settings.multiplier, deltaTime, artist_img.get_height() + title_img.get_height())
 
         # drawing logic - should be handled mostly in AudioBar draw
         screen.fill( INVIS )
@@ -198,7 +203,7 @@ def main():
         if border:
             # Print each hint text if the border is enabled
             for index, img in enumerate(hint_imgs):
-                screen.blit(img, (size[0]*.75-30 ,15+(22*index)))
+                screen.blit(img, (size[0]*.75-30 ,15+(img.get_height()*index)))
 
         # Print song text
         screen.blit(artist_img, (0, size[1]-(artist_img.get_height()+title_img.get_height())))
