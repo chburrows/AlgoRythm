@@ -32,14 +32,14 @@ def callback(in_data, frame_count, time_info, status):
     recent_frames.append(bins)
     recent_frames = recent_frames[-1 * KEEP_FRAMES:]
     
-    last_freqs = xf
-    last_levels = yl
+    last_freqs = xf[:(chunk+1)//3]
+    last_levels = yl[:(chunk+1)//3]
     
     return (yl,pyaudio.paContinue)
 
 def start_stream(settings):
     global stream,p,chunk
-    chunk = settings.b_count * 2 - 1
+    chunk = settings.b_count * 3 - 1
 
     for i in range(p.get_device_count()):
         dev = p.get_device_info_by_index(i)
