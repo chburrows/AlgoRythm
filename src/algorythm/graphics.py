@@ -1,6 +1,6 @@
 from math import ceil
 
-import collect_media_info as media
+import algorythm.collect_media_info as media
 
 import pygame
 import threading
@@ -10,8 +10,8 @@ import win32api
 import win32con
 import win32gui
 
-import backend
-from settings import Settings
+import algorythm.backend as backend
+from algorythm.settings import Settings
 
 class AudioBar:
     def __init__(self, settings, i):

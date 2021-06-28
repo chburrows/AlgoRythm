@@ -1,5 +1,5 @@
 import pygame
-import pygame_textinput as pytxt
+import algorythm.pygame_textinput as pytxt
 
 # Textbox reference https://stackoverflow.com/questions/46390231/how-can-i-create-a-text-input-box-with-pygame
 
