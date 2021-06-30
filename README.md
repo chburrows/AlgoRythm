@@ -14,7 +14,7 @@ TestPyPI link: https://test.pypi.org/project/algorythm/0.1/
 Project Repository link: https://github.com/cburrows1/AlgoRythm
 
 ## Installation instructions
-- Required packages: pyaudio, numpy, scipy, pygame, pywin32
+- Required packages: pyaudio, numpy, scipy, pygame, pywin32, winrt
 - Download PyAudio whl from https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio corresponding to your python version
 - install it with ```pip install <filename>.whl```
 - If on Windows enable Stereo mix: (other OS support coming soon)
