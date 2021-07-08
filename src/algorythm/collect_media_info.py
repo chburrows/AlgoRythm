@@ -56,10 +56,15 @@ def collect_title_artist():
         return ["N/A", "N/A"]
 
 def collect_album_cover():
+    # Collect song info attributes
     info = asyncio.run(winrtapi())
     if info is not None:
+        # Convert info to dictionary
         info_dict = {song_attr: info.__getattribute__(song_attr) for song_attr in dir(info) if song_attr[0] != '_'}
+        # Pass in dictionary and retrieve img byte buffer
         img = asyncio.run(winrtapi_cover(info_dict))
+        # Write bytes to jpg file 
+        # TODO: return to pygame/graphics.py instead
         with open('test_img.jpg', 'wb+') as file:
             file.write(bytearray(img))
         
