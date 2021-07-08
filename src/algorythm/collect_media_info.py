@@ -2,11 +2,12 @@
 #  all intellectual credit given to original author
 import asyncio
 from time import time 
+import winrt
 
 async def winrtapi():
     global MediaManager, info
 
-    import winrt
+    # Song info    
     from winrt.windows.media.control import \
         CurrentSessionChangedEventArgs, GlobalSystemMediaTransportControlsSessionManager as MediaManager
 
@@ -17,6 +18,28 @@ async def winrtapi():
         return await curr_session.try_get_media_properties_async()
     else:
         return None
+
+async def winrtapi_cover(info):
+        # Cover Art
+    from winrt.windows.storage.streams import \
+        DataReader, Buffer, InputStreamOptions
+
+    async def read_stream_into_buffer(stream_ref, buffer):
+        readable_stream = await stream_ref.open_read_async()
+        readable_stream.read_async(buffer, buffer.capacity, InputStreamOptions.READ_AHEAD)
+    
+    # create the current_media_info dict with the earlier code first
+    thumb_stream_ref = info['thumbnail']
+
+    # 5MB (5 million byte) buffer - thumbnail unlikely to be larger
+    thumb_read_buffer = Buffer(5000000)
+
+    # copies data from data stream reference into buffer created above
+    await read_stream_into_buffer(thumb_stream_ref, thumb_read_buffer)
+
+    # reads data (as bytes) from buffer
+    buffer_reader = DataReader.from_buffer(thumb_read_buffer)
+    return buffer_reader.read_bytes(thumb_read_buffer.length) # byte buffer
 
 def collect_title_artist():
     info = asyncio.run(winrtapi())
@@ -32,9 +55,18 @@ def collect_title_artist():
     else:
         return ["N/A", "N/A"]
 
+def collect_album_cover():
+    info = asyncio.run(winrtapi())
+    if info is not None:
+        info_dict = {song_attr: info.__getattribute__(song_attr) for song_attr in dir(info) if song_attr[0] != '_'}
+        img = asyncio.run(winrtapi_cover(info_dict))
+        with open('test_img.jpg', 'wb+') as file:
+            file.write(bytearray(img))
+        
+
+
 
 if __name__ == '__main__':
-    start = time()
     title, artist = curr_media_info = collect_title_artist()
-    end = time() - start
-    print(curr_media_info, end)
+    print(curr_media_info)
+    collect_album_cover()
