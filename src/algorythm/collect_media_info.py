@@ -64,10 +64,9 @@ def collect_album_cover():
         # Pass in dictionary and retrieve img byte buffer
         img = asyncio.run(winrtapi_cover(info_dict))
         # Write bytes to jpg file 
-        # TODO: return to pygame/graphics.py instead
-        with open('test_img.jpg', 'wb+') as file:
+        with open('cover.jpg', 'wb+') as file:
             file.write(bytearray(img))
-        
+        return "test_img.jpg" 
 
 
 

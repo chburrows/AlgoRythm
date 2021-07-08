@@ -1,7 +1,7 @@
 from math import ceil
 from os.path import isfile
 
-import algorythm.collect_media_info as media
+import collect_media_info as media
 
 import pygame
 import threading
@@ -11,8 +11,8 @@ import win32api
 import win32con
 import win32gui
 
-import algorythm.backend as backend
-from algorythm.settings import Settings
+import backend
+from settings import Settings
 
 class AudioBar:
     def __init__(self, settings, i):
@@ -63,6 +63,10 @@ def get_song_imgs(settings, fonts):
     title_img = font_title.render(txt_title, True, txt_color, INVIS)
     return artist_img, title_img
 
+def get_song_cover():
+    global song_cover
+    song_cover = media.collect_album_cover()
+
 
 # Globals
 INVIS = (1,0,1)
@@ -71,6 +75,7 @@ size = (850, 450)
 
 
 txt_title, txt_artist = ("Title", "Artist")
+song_cover = None
 
 def main():
     pygame.init()
@@ -111,15 +116,21 @@ def main():
     font_title = pygame.font.SysFont(custom_font, title_size, bold=True)
     song_fonts = font_artist, font_title
 
-
     # Create thread for getting song info
     t = threading.Thread(target=get_song_info)
+    t2 = threading.Thread(target=get_song_cover)
+
     t.start()
+    t2.start()
+
     t.join()
+    t2.join()
+
 
     # Render default text images
     artist_img, title_img = get_song_imgs(settings, song_fonts)
 
+    cover_img = pygame.image.load(".\cover.jpg")
     # Connect to backend and create bars
     backend.start_stream(settings)
     settings.b_height = size[1] - (artist_img.get_height() + title_img.get_height())
@@ -131,8 +142,8 @@ def main():
     pygame.time.set_timer(SONG_EVENT, 3000) # Time in ms in-between song gathering
 
     # Track ticks
-    t = pygame.time.get_ticks()
-    getTicksLastFrame = t
+    ticks = pygame.time.get_ticks()
+    getTicksLastFrame = ticks
 
     # Main PyGame render loop
     run = True
@@ -141,16 +152,19 @@ def main():
     last_song_title = txt_title
     while run:
         # Track ticks for smoothing
-        t = pygame.time.get_ticks()
-        deltaTime = (t - getTicksLastFrame) / 1000.0
-        getTicksLastFrame = t
+        ticks = pygame.time.get_ticks()
+        deltaTime = (ticks - getTicksLastFrame) / 1000.0
+        getTicksLastFrame = ticks
 
         for event in pygame.event.get():
             if event.type == GET_SONG:
                 # Check for new song info
                 last_song_title = txt_title
                 t = threading.Thread(target=get_song_info)
+                t2 = threading.Thread(target=get_song_cover)
+
                 t.start()
+                t2.start()
             elif event.type == pygame.QUIT:
                 #close program if X button clicked
                 run = False
@@ -169,6 +183,13 @@ def main():
         if last_song_title != txt_title:
             # Check to see if the song changed, if so, re-render the text
             artist_img, title_img = get_song_imgs(settings, song_fonts)
+            cover_img = pygame.image.load(song_cover)
+
+            
+        try:
+            screen.blit(cover_img, (0,0))
+        except:
+            print("Img not available")
             
         if displaySettings:
             # run after s key has been pressed
