@@ -2,11 +2,11 @@
 #  all intellectual credit given to original author
 import asyncio
 from time import time 
-import winrt
 
 async def winrtapi():
     global MediaManager, info
 
+    import winrt
     # Song info    
     from winrt.windows.media.control import \
         CurrentSessionChangedEventArgs, GlobalSystemMediaTransportControlsSessionManager as MediaManager
@@ -21,6 +21,7 @@ async def winrtapi():
 
 async def winrtapi_cover(info):
         # Cover Art
+    import winrt
     from winrt.windows.storage.streams import \
         DataReader, Buffer, InputStreamOptions
 
@@ -58,17 +59,16 @@ def collect_title_artist():
 def collect_album_cover():
     # Collect song info attributes
     info = asyncio.run(winrtapi())
+
     if info is not None:
         # Convert info to dictionary
         info_dict = {song_attr: info.__getattribute__(song_attr) for song_attr in dir(info) if song_attr[0] != '_'}
         # Pass in dictionary and retrieve img byte buffer
         img = asyncio.run(winrtapi_cover(info_dict))
         # Write bytes to jpg file 
-        with open('cover.jpg', 'wb+') as file:
-            file.write(bytearray(img))
-        return "test_img.jpg" 
-
-
+        return bytearray(img)
+    else:
+        return None
 
 if __name__ == '__main__':
     title, artist = curr_media_info = collect_title_artist()

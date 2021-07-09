@@ -5,6 +5,7 @@ import collect_media_info as media
 
 import pygame
 import threading
+import Bitmap
 
 #pywin32
 import win32api 
@@ -75,7 +76,7 @@ size = (850, 450)
 
 
 txt_title, txt_artist = ("Title", "Artist")
-song_cover = None
+song_cover = 'cover.bmp'
 
 def main():
     pygame.init()
@@ -119,27 +120,31 @@ def main():
     # Create thread for getting song info
     t = threading.Thread(target=get_song_info)
     t2 = threading.Thread(target=get_song_cover)
-
     t.start()
     t2.start()
-
     t.join()
     t2.join()
 
-
     # Render default text images
     artist_img, title_img = get_song_imgs(settings, song_fonts)
+    info_height = artist_img.get_height() + title_img.get_height()
 
-    cover_img = pygame.image.load(".\cover.jpg")
+    if song_cover is not None:
+        cover_img_unscaled = pygame.image.load(song_cover)
+        cover_img = pygame.transform.scale(cover_img_unscaled, (info_height,info_height))
+    
     # Connect to backend and create bars
     backend.start_stream(settings)
-    settings.b_height = size[1] - (artist_img.get_height() + title_img.get_height())
+    settings.b_height = size[1] - info_height
     bars = build_bars(settings, size[0])
 
     # Create custom event for retrieving song info
     GET_SONG = pygame.event.custom_type()
     SONG_EVENT = pygame.event.Event(GET_SONG)
     pygame.time.set_timer(SONG_EVENT, 3000) # Time in ms in-between song gathering
+
+    GET_COVER = pygame.event.custom_type()
+    COVER_EVENT = pygame.event.Event(GET_COVER)
 
     # Track ticks
     ticks = pygame.time.get_ticks()
@@ -161,10 +166,14 @@ def main():
                 # Check for new song info
                 last_song_title = txt_title
                 t = threading.Thread(target=get_song_info)
-                t2 = threading.Thread(target=get_song_cover)
-
                 t.start()
+            elif event.type == COVER_EVENT:
+                t2 = threading.Thread(target=get_song_cover)
                 t2.start()
+                t2.join()
+                if song_cover is not None:
+                    cover_img_unscaled = pygame.image.load(song_cover)
+                    cover_img = pygame.transform.scale(cover_img_unscaled, (info_height,info_height))
             elif event.type == pygame.QUIT:
                 #close program if X button clicked
                 run = False
@@ -183,13 +192,7 @@ def main():
         if last_song_title != txt_title:
             # Check to see if the song changed, if so, re-render the text
             artist_img, title_img = get_song_imgs(settings, song_fonts)
-            cover_img = pygame.image.load(song_cover)
-
-            
-        try:
-            screen.blit(cover_img, (0,0))
-        except:
-            print("Img not available")
+            pygame.event.post(COVER_EVENT)
             
         if displaySettings:
             # run after s key has been pressed
@@ -203,8 +206,9 @@ def main():
                 font_title = pygame.font.SysFont(custom_font, settings.title_size, bold=True)
                 song_fonts = font_artist, font_title
                 artist_img, title_img = get_song_imgs(settings, song_fonts)
+                info_height = artist_img.get_height() + title_img.get_height()
                 if temp_text[:2] != (settings.artist_size, settings.title_size):
-                    settings.b_height = size[1] - (artist_img.get_height() + title_img.get_height())
+                    settings.b_height = size[1] - info_height
             # Update each bar with new settings
             for bar in bars:
                 bar.update_properties(settings)
@@ -216,10 +220,15 @@ def main():
 
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
         for i, bar in enumerate(bars):
-            bar.update(settings, backend.last_levels[i] * settings.multiplier, deltaTime, artist_img.get_height() + title_img.get_height())
+            bar.update(settings, backend.last_levels[i] * settings.multiplier, deltaTime, info_height)
 
         # drawing logic - should be handled mostly in AudioBar draw
         screen.fill( INVIS )
+
+        try:
+            screen.blit(cover_img, (0,size[1]-info_height))
+        except:
+            print("Img not available")
 
         # Draw each bar
         for bar in bars:
@@ -231,8 +240,8 @@ def main():
                 screen.blit(img, (size[0]*.75-30 ,15+(img.get_height()*index)))
 
         # Print song text
-        screen.blit(artist_img, (0, size[1]-(artist_img.get_height()+title_img.get_height())))
-        screen.blit(title_img, (0, size[1]-title_img.get_height()))
+        screen.blit(artist_img, (info_height+10, size[1]-info_height))
+        screen.blit(title_img, (info_height+10, size[1]-title_img.get_height()))
 
         pygame.display.flip()
         clock.tick(60)
