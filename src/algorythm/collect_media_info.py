@@ -2,6 +2,10 @@
 #  all intellectual credit given to original author
 import asyncio
 from time import time 
+from PIL import Image
+import math
+import numpy
+from io import BytesIO
 
 async def winrtapi():
     global MediaManager, info
@@ -63,14 +67,20 @@ def collect_album_cover():
     if info is not None:
         # Convert info to dictionary
         info_dict = {song_attr: info.__getattribute__(song_attr) for song_attr in dir(info) if song_attr[0] != '_'}
+        img_data = None
         # Pass in dictionary and retrieve img byte buffer
-        img = asyncio.run(winrtapi_cover(info_dict))
-        # Write bytes to jpg file 
-        return bytearray(img)
+        img_data = asyncio.run(winrtapi_cover(info_dict))
+        try:
+            img = Image.open(BytesIO(bytearray(img_data)))
+        except:
+            return None
+
+        # Create Image from buffer object
+        return img
     else:
         return None
 
 if __name__ == '__main__':
     title, artist = curr_media_info = collect_title_artist()
     print(curr_media_info)
-    collect_album_cover()
+    print(collect_album_cover())
