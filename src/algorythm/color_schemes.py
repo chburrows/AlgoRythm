@@ -2,6 +2,7 @@ from numpy.lib.arraysetops import unique
 from file import function
 from PIL import Image
 import numpy
+from colormap import rgb2hex
 
 def generate_colors(img):
     # convert bytes to RGB values
@@ -21,8 +22,9 @@ def generate_colors(img):
     return palette[:5]
 
 
-def rgb_to_hex()
-
-
-
-
+def rgb_to_hex(palette):
+    hex_codes = []
+    for i in palette:
+       hex_codes[i] = rgb2hex(palette[i])
+    
+    return hex_codes
