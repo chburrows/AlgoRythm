@@ -2,6 +2,10 @@
 #  all intellectual credit given to original author
 import asyncio
 from time import time 
+from numpy.lib.arraysetops import unique
+from algorythm.settings import rgb_to_hex
+from PIL import Image
+import numpy
 
 async def winrtapi():
     global MediaManager, info
@@ -32,6 +36,29 @@ def collect_title_artist():
     else:
         return ["N/A", "N/A"]
 
+#  Building the color palette and obtaining the top 10 most frequent colors in an image
+#  Logic and functionality inspired by https://stackoverflow.com/questions/18801218/build-a-color-palette-from-image-url
+
+def generate_colors():
+    img = collect_album_cover()
+    # convert bytes to RGB values
+    rgb_img = img.convert('RGB')
+    # make data contiguous for ordering purposes
+    arr = numpy.ascontiguousarray(rgb_img)
+    # flatten to manipulate 
+    arr = arr.ravel()
+    # get the unique colors of the array
+    palette, unique_index = numpy.unique(arr, return_inverse=True)
+    # make array 1D as opposed to ND
+    palette = palette.view(arr.dtype).reshape(-1, arr.shape[-1])
+    num_unique = numpy.bincount(unique_index)
+    sorted = numpy.argsort(num_unique)
+    palette = palette[sorted[::-1]]
+    # return top 5 colors in the image as hex codes
+    hex_codes = []
+    for i in palette[:5]:
+       hex_codes[i] = rgb_to_hex(palette[i])
+    return hex_codes
 
 if __name__ == '__main__':
     start = time()
