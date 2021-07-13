@@ -29,9 +29,31 @@ class AudioBar:
         newPos = self.max_height * (1 - intensity)
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
-        self.draw_y = max(0, min(self.max_height,self.draw_y))
+        self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
-        self.rect=[self.x, (size[1]-self.max_height-text_gap)+self.draw_y,self.width, bar_height]
+        self.rect = [self.x, (size[1]-self.max_height-text_gap) + self.draw_y, self.width, bar_height]
+    def draw(self, screen):
+        #draw the rectangle to the screen using pygame draw rect
+        pygame.draw.rect(screen, self.color, self.rect, 0)
+
+class DualBar:
+    def __init__(self, settings, i):
+        self.index = i
+        self.update_properties(settings)
+    def update_properties(self, settings):
+        self.max_height = settings.b_height
+        self.width = settings.b_width
+        self.gap = settings.b_gap
+        self.color = settings.b_color
+        self.x = self.width * self.index + (self.index * self.gap)
+        self.draw_y = self.max_height
+    def update(self, settings, intensity, dt, text_gap):
+        newPos = self.max_height * (1 - intensity)
+        accel = (newPos - self.draw_y) * settings.smoothing
+        self.draw_y += accel * dt
+        self.draw_y = max(0, min(self.max_height, self.draw_y))
+        bar_height = self.max_height-self.draw_y
+        self.rect = [self.x, (size[1]-self.max_height-text_gap) + self.draw_y - 180 + bar_height/2, self.width, bar_height]
     def draw(self, screen):
         #draw the rectangle to the screen using pygame draw rect
         pygame.draw.rect(screen, self.color, self.rect, 0)
@@ -45,13 +67,14 @@ def build_bars(settings, width):
         # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
         settings.b_width = ceil((width - (settings.b_count * settings.b_gap)) / len(backend.last_freqs))
         for i in range(len(backend.last_freqs)):
-            bars.append(AudioBar(settings, i))
+            #TODO - create setting to switch layout
+            #bars.append(AudioBar(settings, i))
+            bars.append(DualBar(settings, i))
     return bars
-
 
 def get_song_info():
     global txt_title, txt_artist
-    txt_title, txt_artist =  media.collect_title_artist()
+    txt_title, txt_artist = media.collect_title_artist()
 
 def get_song_imgs(settings, fonts):
     global txt_artist, txt_title
