@@ -58,6 +58,28 @@ class DualBar:
         #draw the rectangle to the screen using pygame draw rect
         pygame.draw.rect(screen, self.color, self.rect, 0)
 
+class InvertedBar:
+    def __init__(self, settings, i):
+        self.index = i
+        self.update_properties(settings)
+    def update_properties(self, settings):
+        self.max_height = settings.b_height
+        self.width = settings.b_width
+        self.gap = settings.b_gap
+        self.color = settings.b_color
+        self.x = self.width * self.index + (self.index * self.gap)
+        self.draw_y = self.max_height
+    def update(self, settings, intensity, dt, text_gap):
+        newPos = self.max_height * (1 - intensity)
+        accel = (newPos - self.draw_y) * settings.smoothing
+        self.draw_y += accel * dt
+        self.draw_y = max(0, min(self.max_height, self.draw_y))
+        bar_height = self.max_height-self.draw_y
+        self.rect = [self.x, 0, self.width, bar_height]
+    def draw(self, screen):
+        #draw the rectangle to the screen using pygame draw rect
+        pygame.draw.rect(screen, self.color, self.rect, 0)
+
 def build_bars(settings, width):
     bars = []
     while len(bars) == 0:
@@ -69,6 +91,7 @@ def build_bars(settings, width):
         for i in range(len(backend.last_freqs)):
             #TODO - create setting to switch layout
             #bars.append(AudioBar(settings, i))
+            #bars.append(InvertedBar(settings, i))
             bars.append(DualBar(settings, i))
     return bars
 
