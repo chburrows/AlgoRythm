@@ -7,6 +7,7 @@ import math
 import numpy
 import threading
 from io import BytesIO
+import time
 
 
 async def winrtapi():
@@ -44,6 +45,7 @@ async def winrtapi_cover(info):
 
     # reads data (as bytes) from buffer
     try:
+        print(thumb_read_buffer.length)  # Having this print statement here makes it get the image consistently?
         buffer_reader = DataReader.from_buffer(thumb_read_buffer)
         data = buffer_reader.read_bytes(thumb_read_buffer.length) # byte buffer
         return data
@@ -73,18 +75,16 @@ def collect_album_cover():
         info_dict = {song_attr: info.__getattribute__(song_attr) for song_attr in dir(info) if song_attr[0] != '_'}
         
         # Pass in dictionary and retrieve img byte buffer
-        attempts = 5
-        img = None
-        while attempts > 0 and img is None:
-            attempts -= 1
-            img_data = asyncio.run(winrtapi_cover(info_dict))
-            # Create Image from buffer object
-            if len(img_data) != 0:
-                img = Image.open(BytesIO(bytearray(img_data)))
-        return img
+        img_data = asyncio.run(winrtapi_cover(info_dict))
+        # Create Image from buffer object
+        if len(img_data) != 0:
+            return Image.open(BytesIO(bytearray(img_data)))
+    return None
                 
 if __name__ == '__main__':
     title, artist = curr_media_info = collect_title_artist()
     print(curr_media_info)
+    start = time.time()
     print(collect_album_cover())
+    print(time.time() - start)
     
