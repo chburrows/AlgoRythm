@@ -5,11 +5,11 @@ from time import time
 from PIL import Image
 import math
 import numpy
+import threading
 from io import BytesIO
 
-async def winrtapi():
-    global MediaManager, info
 
+async def winrtapi():
     import winrt
     # Song info    
     from winrt.windows.media.control import \
@@ -24,7 +24,7 @@ async def winrtapi():
         return None
 
 async def winrtapi_cover(info):
-        # Cover Art
+    # Cover Art
     import winrt
     from winrt.windows.storage.streams import \
         DataReader, Buffer, InputStreamOptions
@@ -43,8 +43,12 @@ async def winrtapi_cover(info):
     await read_stream_into_buffer(thumb_stream_ref, thumb_read_buffer)
 
     # reads data (as bytes) from buffer
-    buffer_reader = DataReader.from_buffer(thumb_read_buffer)
-    return buffer_reader.read_bytes(thumb_read_buffer.length) # byte buffer
+    try:
+        buffer_reader = DataReader.from_buffer(thumb_read_buffer)
+        data = buffer_reader.read_bytes(thumb_read_buffer.length) # byte buffer
+        return data
+    except:
+        return []
 
 def collect_title_artist():
     info = asyncio.run(winrtapi())
@@ -67,20 +71,20 @@ def collect_album_cover():
     if info is not None:
         # Convert info to dictionary
         info_dict = {song_attr: info.__getattribute__(song_attr) for song_attr in dir(info) if song_attr[0] != '_'}
-        img_data = None
+        
         # Pass in dictionary and retrieve img byte buffer
-        img_data = asyncio.run(winrtapi_cover(info_dict))
-        try:
-            img = Image.open(BytesIO(bytearray(img_data)))
-        except:
-            return None
-
-        # Create Image from buffer object
+        attempts = 5
+        img = None
+        while attempts > 0 and img is None:
+            attempts -= 1
+            img_data = asyncio.run(winrtapi_cover(info_dict))
+            # Create Image from buffer object
+            if len(img_data) != 0:
+                img = Image.open(BytesIO(bytearray(img_data)))
         return img
-    else:
-        return None
-
+                
 if __name__ == '__main__':
     title, artist = curr_media_info = collect_title_artist()
     print(curr_media_info)
     print(collect_album_cover())
+    
