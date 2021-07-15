@@ -1,16 +1,22 @@
-#  function methodology for obtaining media information adapted from https://stackoverflow.com/questions/65011660/how-can-i-get-the-title-of-the-currently-playing-media-in-windows-10-with-python
-#  all intellectual credit given to original author
 import asyncio
 from time import time 
-from numpy.lib.arraysetops import unique
-from algorythm.settings import rgb_to_hex
 from PIL import Image
+import requests
+import tempfile
 import numpy
+from io import BytesIO
+import binascii
+import numpy as np
+import scipy
+import scipy.misc
+import scipy.cluster
+import spotipy_implementation as sp
 
 async def winrtapi():
     global MediaManager, info
 
     import winrt
+    # Song info    
     from winrt.windows.media.control import \
         CurrentSessionChangedEventArgs, GlobalSystemMediaTransportControlsSessionManager as MediaManager
 
@@ -21,6 +27,29 @@ async def winrtapi():
         return await curr_session.try_get_media_properties_async()
     else:
         return None
+
+async def winrtapi_cover(info):
+        # Cover Art
+    import winrt
+    from winrt.windows.storage.streams import \
+        DataReader, Buffer, InputStreamOptions
+
+    async def read_stream_into_buffer(stream_ref, buffer):
+        readable_stream = await stream_ref.open_read_async()
+        readable_stream.read_async(buffer, buffer.capacity, InputStreamOptions.READ_AHEAD)
+    
+    # create the current_media_info dict with the earlier code first
+    thumb_stream_ref = info['thumbnail']
+
+    # 5MB (5 million byte) buffer - thumbnail unlikely to be larger
+    thumb_read_buffer = Buffer(5000000)
+
+    # copies data from data stream reference into buffer created above
+    await read_stream_into_buffer(thumb_stream_ref, thumb_read_buffer)
+
+    # reads data (as bytes) from buffer
+    buffer_reader = DataReader.from_buffer(thumb_read_buffer)
+    return buffer_reader.read_bytes(thumb_read_buffer.length) # byte buffer
 
 def collect_title_artist():
     info = asyncio.run(winrtapi())
@@ -36,32 +65,45 @@ def collect_title_artist():
     else:
         return ["N/A", "N/A"]
 
-#  Building the color palette and obtaining the top 10 most frequent colors in an image
-#  Logic and functionality inspired by https://stackoverflow.com/questions/18801218/build-a-color-palette-from-image-url
+def get_background_img(img_url):
+    buffer = tempfile.SpooledTemporaryFile(max_size=1e9)
+    r = requests.get(img_url, stream=True)
+    if r.status_code == 200:
+        downloaded = 0
+        for chunk in r.iter_content(chunk_size=1024):
+            downloaded += len(chunk)
+            buffer.write(chunk)
+        buffer.seek(0)
+        i = Image.open(BytesIO(buffer.read()))
+    buffer.close()
+    return i
+
+
+def generate_colors_from_img(img, num_colors):
+    NUM_CLUSTERS = 5
+
+    rgb_img = img.convert('RGB')
+    ar = np.asarray(rgb_img)
+    shape = ar.shape
+    ar = ar.reshape(numpy.product(shape[:2]), shape[2]).astype(float)
+    codes, dist = scipy.cluster.vq.kmeans(ar, NUM_CLUSTERS)
+    vecs, dist = scipy.cluster.vq.vq(ar, codes)         # assign codes
+    counts, bins = numpy.histogram(vecs, len(codes))    # count occurrences
+
+    max_indeces = numpy.argpartition(counts, -1 * num_colors)[-1 * num_colors:]
+    colors = ["#" + binascii.hexlify(bytearray(int(c) for c in codes[i])).decode('ascii') for i in max_indeces]
+    return colors
 
 def generate_colors():
-    img = collect_album_cover()
-    # convert bytes to RGB values
-    rgb_img = img.convert('RGB')
-    # make data contiguous for ordering purposes
-    arr = numpy.ascontiguousarray(rgb_img)
-    # flatten to manipulate 
-    arr = arr.ravel()
-    # get the unique colors of the array
-    palette, unique_index = numpy.unique(arr, return_inverse=True)
-    # make array 1D as opposed to ND
-    palette = palette.view(arr.dtype).reshape(-1, arr.shape[-1])
-    num_unique = numpy.bincount(unique_index)
-    sorted = numpy.argsort(num_unique)
-    palette = palette[sorted[::-1]]
-    # return top 5 colors in the image as hex codes
-    hex_codes = []
-    for i in palette[:5]:
-       hex_codes[i] = rgb_to_hex(palette[i])
-    return hex_codes
-
+    curr_media_info = collect_title_artist()
+    track_id = sp.search_for_id(*curr_media_info)
+    track_img_url = sp.get_album_art(track_id)
+    pil_img = get_background_img(track_img_url)
+    features = sp.get_audio_features(track_id)
+    tempo = float(features['track']['tempo'])
+    time_per_beat = 60.0 / tempo # in sec
+    time_sig = features['track']['time_signature']
+    colors = generate_colors_from_img(pil_img, time_sig)
+    return {'time_per_beat':time_per_beat, 'colors':colors}
 if __name__ == '__main__':
-    start = time()
-    title, artist = curr_media_info = collect_title_artist()
-    end = time() - start
-    print(curr_media_info, end)
+    print(generate_colors())
