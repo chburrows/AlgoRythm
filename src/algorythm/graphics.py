@@ -178,7 +178,7 @@ def main():
                 last_song_title = txt_title
                 t = threading.Thread(target=get_song_info)
                 t.start()
-                if song_cover is None and t2 is not None and not t2.is_alive():
+                if song_cover is None and (t2 is None or not t2.is_alive()):
                     pygame.event.post(COVER_EVENT)
             elif event.type == GET_COVER:
                 print("COVER EVENT")
