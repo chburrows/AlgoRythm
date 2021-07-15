@@ -68,11 +68,11 @@ def get_song_cover():
     global song_cover
     pil_img = media.collect_album_cover()
     if pil_img is not None:
+        print("Song cover set")
         song_cover = pygame.image.fromstring(pil_img.tobytes(), pil_img.size, pil_img.mode).convert()
     else:
         # TODO: replace with default img
         print("Error gathering album cover.")
-        song_cover = None
 
 # Globals
 INVIS = (1,0,1)
@@ -84,6 +84,7 @@ txt_title, txt_artist = ("Title", "Artist")
 song_cover = None
 
 def main():
+    global song_cover, txt_title, txt_artist
     pygame.init()
     pygame.font.init()
     settings = Settings()
@@ -160,6 +161,7 @@ def main():
     border = True
     displaySettings = False
     last_song_title = txt_title
+    cover_set = song_cover is not None
     t = t2 = None
     while run:
         # Track ticks for smoothing
@@ -170,11 +172,18 @@ def main():
         for event in pygame.event.get():
             if event.type == GET_SONG:
                 # Check for new song info
+                if t is not None and t.is_alive():
+                    t.join(0)
+
                 last_song_title = txt_title
                 t = threading.Thread(target=get_song_info)
                 t.start()
-            elif event.type == COVER_EVENT:
+                if song_cover is None and t2 is not None and not t2.is_alive():
+                    pygame.event.post(COVER_EVENT)
+            elif event.type == GET_COVER:
                 print("COVER EVENT")
+                if t2 is not None and t2.is_alive():
+                    t2.join(0)
                 t2 = threading.Thread(target=get_song_cover)
                 t2.start()
             elif event.type == pygame.QUIT:
@@ -195,7 +204,13 @@ def main():
         if last_song_title != txt_title:
             # Check to see if the song changed, if so, re-render the text
             artist_img, title_img = get_song_imgs(settings, song_fonts)
+            last_song_title = txt_title
+            song_cover = None
             pygame.event.post(COVER_EVENT)
+
+        if not cover_set and song_cover is not None and not t2.is_alive():
+            cover_img = pygame.transform.scale(song_cover, (info_height,info_height))
+            cover_set = True
 
         if displaySettings:
             # run after s key has been pressed
