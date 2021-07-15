@@ -54,7 +54,7 @@ class InvertedBar(AudioBar):
         bar_height = self.max_height-self.draw_y
         self.rect = [self.x, 0, self.width, bar_height]
 
-def build_bars(settings, width):
+def build_bars(settings, width, layout):
     bars = []
     while len(bars) == 0:
         if len(backend.recent_frames) == 0:
@@ -62,11 +62,16 @@ def build_bars(settings, width):
         # creation of the *Bar objects and add them to the list
         # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
         settings.b_width = ceil((width - (settings.b_count * settings.b_gap)) / len(backend.last_freqs))
-        for i in range(len(backend.last_freqs)):
-            #TODO - create setting to switch layout
-            #bars.append(AudioBar(settings, i))
-            #bars.append(InvertedBar(settings, i))
-            bars.append(DualBar(settings, i))
+        if layout == 0:
+            for i in range(len(backend.last_freqs)):
+                #TODO - create setting to switch layout
+                bars.append(AudioBar(settings, i))
+        elif layout == 1:
+            for i in range(len(backend.last_freqs)):
+                bars.append(InvertedBar(settings, i))
+        else:
+            for i in range(len(backend.last_freqs)):
+                bars.append(DualBar(settings, i))
     return bars
 
 def get_song_info():
@@ -120,7 +125,8 @@ def main():
 
     hint_imgs = [font_hint.render('Key Hints:', True, WHITE, INVIS),
         font_hint2.render('Press S for Settings', True, WHITE, INVIS),
-        font_hint2.render('Press M to toggle window border', True, WHITE, INVIS)]
+        font_hint2.render('Press M to toggle window border', True, WHITE, INVIS),
+        font_hint2.render('Press L to toggle layout', True, WHITE, INVIS)]
 
     # Song Desciption Text
     # Allow for custom fonts in future
@@ -130,7 +136,7 @@ def main():
     font_artist = pygame.font.SysFont(custom_font, artist_size, bold=True)
     font_title = pygame.font.SysFont(custom_font, title_size, bold=True)
     song_fonts = font_artist, font_title
-
+    layout = 0
 
     # Create thread for getting song info
     t = threading.Thread(target=get_song_info)
@@ -143,7 +149,7 @@ def main():
     # Connect to backend and create bars
     backend.start_stream(settings)
     settings.b_height = size[1] - (artist_img.get_height() + title_img.get_height())
-    bars = build_bars(settings, size[0])
+    bars = build_bars(settings, size[0], layout)
 
     # Create custom event for retrieving song info
     GET_SONG = pygame.event.custom_type()
@@ -185,6 +191,9 @@ def main():
                         screen = pygame.display.set_mode(size)
                     else:
                         screen = pygame.display.set_mode(size, pygame.NOFRAME)
+                elif event.key == pygame.K_l:
+                    layout = (layout + 1) % 3
+                    bars = build_bars(settings, size[0], layout)
 
         if last_song_title != txt_title:
             # Check to see if the song changed, if so, re-render the text
@@ -210,7 +219,7 @@ def main():
             if temp_chunk != settings.b_count:
                 # If chunk was changed, restart stream and rebuld bars
                 backend.restart_stream(settings)
-                bars = build_bars(settings, size[0])
+                bars = build_bars(settings, size[0], layout)
             settings.save("algorythm_settings")
 
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
