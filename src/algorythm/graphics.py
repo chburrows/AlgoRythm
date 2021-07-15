@@ -52,6 +52,7 @@ def build_bars(settings, width):
 def get_song_info():
     global txt_title, txt_artist
     txt_title, txt_artist =  media.collect_title_artist()
+    colors = media.generate_colors()
 
 def get_song_imgs(settings, fonts):
     global txt_artist, txt_title
