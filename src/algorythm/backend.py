@@ -26,7 +26,7 @@ def callback(in_data, frame_count, time_info, status):
     xf = rfftfreq(chunk, 1 / RATE)
 
     #normalization of fft values - other methods could be investigated
-    yl = 1.0 / (chunk / 2) * yf
+    yl = 1.0 / (chunk / 3) * yf
     
     bins = list(zip(xf, yl))
     recent_frames.append(bins)
