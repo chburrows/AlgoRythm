@@ -68,8 +68,11 @@ def get_song_cover():
     global song_cover
     pil_img = media.collect_album_cover()
     if pil_img is not None:
-        print("Song cover set")
-        song_cover = pygame.image.fromstring(pil_img.tobytes(), pil_img.size, pil_img.mode).convert()
+        try:
+            song_cover = pygame.image.fromstring(pil_img.tobytes(), pil_img.size, pil_img.mode).convert()
+            print("Song cover set")
+        except:
+            print("Exception with PIL img")
     else:
         # TODO: replace with default img
         print("Error gathering album cover.")
@@ -128,6 +131,7 @@ def main():
     t.start()
     t.join()
     
+    # Another thread for pulling song cover
     t2 = threading.Thread(target=get_song_cover)
     t2.start()
     t2.join()
@@ -162,27 +166,26 @@ def main():
     displaySettings = False
     last_song_title = txt_title
     cover_set = song_cover is not None
-    t = t2 = None
     while run:
         # Track ticks for smoothing
         ticks = pygame.time.get_ticks()
         deltaTime = (ticks - getTicksLastFrame) / 1000.0
         getTicksLastFrame = ticks
 
+        # Handle pygame events
         for event in pygame.event.get():
             if event.type == GET_SONG:
                 # Check for new song info
-                if t is not None and t.is_alive():
+                if t.is_alive():
                     t.join(0)
 
                 last_song_title = txt_title
                 t = threading.Thread(target=get_song_info)
                 t.start()
-                if song_cover is None and (t2 is None or not t2.is_alive()):
+                if song_cover is None and not t2.is_alive():
                     pygame.event.post(COVER_EVENT)
             elif event.type == GET_COVER:
-                print("COVER EVENT")
-                if t2 is not None and t2.is_alive():
+                if t2.is_alive():
                     t2.join(0)
                 t2 = threading.Thread(target=get_song_cover)
                 t2.start()
@@ -231,6 +234,7 @@ def main():
             # Update each bar with new settings
             for bar in bars:
                 bar.update_properties(settings)
+
             if temp_chunk != settings.b_count:
                 # If chunk was changed, restart stream and rebuld bars
                 backend.restart_stream(settings)
