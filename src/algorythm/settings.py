@@ -47,6 +47,8 @@ class Settings:
         GRAY = (200, 200, 200)
         width, height = size
 
+        # TODO: Call color scheme function, catch exceptions, and create rectangles for palette
+
         # Text Input
         text_inputs = [pytxt.TextInput(str(self.sensitivity), max_string_length=4),
             pytxt.TextInput(str(self.smoothing), max_string_length=4),
@@ -61,17 +63,22 @@ class Settings:
             pytxt.TextInput(str(self.title_size), max_string_length=3),
             pytxt.TextInput(rgb_to_hex(self.text_color), max_string_length=6)]
 
-        # Titles
+        # Setting Titles
+        # Create font with a set size
         font = pygame.font.SysFont(None, 32)
+        # Render an image with a text phrase using font
         title_img = font.render('Settings', True, GRAY, BACK_COLOR)
         vert_prop_img = font.render('Visualizer Properties', True, WHITE, BACK_COLOR)
         music_img = font.render('Music Properties', True, WHITE, BACK_COLOR)
         font_hint = pygame.font.SysFont(None, 24, italic=True)
         hint_img = font_hint.render("Press enter to confirm value.", True, GRAY, BACK_COLOR)
         
-        # Options
+        # Option text
+        # NOTE: To add a new font size for text follow the format below, changing the number to the desired font size
         font_options = pygame.font.SysFont(None, 28)
         
+        # NOTE: Then render the image using above font with ("Text", True, (R,G,B), BACK_COLOR)
+        # If displaying multiple text elements in a row, it is easier to store them in an array
         opt_imgs = [font_options.render('Sensitivity (db):', True, WHITE, BACK_COLOR),
             font_options.render('Smoothing Level:', True, WHITE, BACK_COLOR),
             font_options.render('Multiplier:', True, WHITE, BACK_COLOR),
@@ -85,6 +92,7 @@ class Settings:
             font_options.render('Title Text Size:', True, WHITE, BACK_COLOR),
             font_options.render('Text Color:', True, WHITE, BACK_COLOR)]
 
+        # Starting x_pos for text options
         x_pos = width // 3
             
         while True:
@@ -95,8 +103,15 @@ class Settings:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_s:
                         return False, True
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    # If left mouse button was clicked, get mouse position
+                    pos = pygame.mouse.get_pos()
+                    # Check if obj is clicked on using something such as:
+                    # if RectObj.collidepoint(pos)
+                    # TODO: Check if color palette rectangle was pressed, and assign its color to settings b_color and/or text_color
 
-            # prob a better way to do this but tired
+
+            # If collecting input from a text box, check if there was an update to value, then assign it to settings attribute
             try:
                 if text_inputs[0].update(events):
                     self.sensitivity = int(text_inputs[0].get_text())
@@ -121,10 +136,12 @@ class Settings:
                 elif song_inputs[2].update(events):
                     self.text_color = hex_to_rgb(song_inputs[2].get_text())
             except ValueError:
+                # Validate input
                 print("Error: Invalid input, NaN.")
 
             screen.fill( BACK_COLOR )
 
+            # NOTE: Text has to be blit to screen using the img rendered above. Just use screen.blit(img, (xpos, ypos))
             # Display title text
             screen.blit(title_img, (20, 20))
             screen.blit(vert_prop_img, (x_pos, 20))
@@ -146,6 +163,9 @@ class Settings:
                 screen.blit(text, (x_pos*2, y_pos))
                 screen.blit(song_inputs[ind].get_surface(), (x_pos*2+180, y_pos))
                 song_inputs[ind].set_pos((x_pos*2+180, y_pos))
+
+
+            # NOTE: For anything else that needs to be displayed, create an object with pygame (such as Rect), and draw it here with pygame.draw
 
             pygame.display.flip()
             clock.tick(30)
