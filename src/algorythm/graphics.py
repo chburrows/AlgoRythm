@@ -66,7 +66,6 @@ def build_bars(settings, width):
         settings.b_width = ceil((width - (settings.b_count * settings.b_gap)) / len(backend.last_freqs))
         if layout == 0:
             for i in range(len(backend.last_freqs)):
-                #TODO - create setting to switch layout
                 bars.append(AudioBar(settings, i))
         elif layout == 1:
             for i in range(len(backend.last_freqs)):
