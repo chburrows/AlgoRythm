@@ -150,7 +150,7 @@ def main():
     # Connect to backend and create bars
     backend.start_stream(settings)
     settings.b_height = size[1] - (artist_img.get_height() + title_img.get_height())
-    bars = build_bars(settings, size[0], layout)
+    bars = build_bars(settings, size[0])
 
     # Create custom event for retrieving song info
     GET_SONG = pygame.event.custom_type()
@@ -220,7 +220,7 @@ def main():
             if temp_chunk != settings.b_count:
                 # If chunk was changed, restart stream and rebuld bars
                 backend.restart_stream(settings)
-                bars = build_bars(settings, size[0], layout)
+                bars = build_bars(settings, size[0])
             settings.save("algorythm_settings")
 
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
