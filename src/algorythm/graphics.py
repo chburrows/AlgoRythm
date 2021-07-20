@@ -38,7 +38,7 @@ class AudioBar:
 
 class DualBar(AudioBar):
     def update(self, settings, intensity, dt, text_gap):
-        newPos = self.max_height * (1 - intensity)
+        newPos = self.max_height * (1 - intensity * self.index / 20)
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
@@ -47,7 +47,7 @@ class DualBar(AudioBar):
 
 class InvertedBar(AudioBar):
     def update(self, settings, intensity, dt, text_gap):
-        newPos = self.max_height * (1 - intensity)
+        newPos = self.max_height * (1 - intensity * self.index / 20)
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
