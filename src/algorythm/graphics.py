@@ -54,8 +54,10 @@ class InvertedBar(AudioBar):
         bar_height = self.max_height-self.draw_y
         self.rect = [self.x, 0, self.width, bar_height]
 
-def build_bars(settings, width, layout):
+def build_bars(settings, width):
     bars = []
+    layout = settings.layout
+
     while len(bars) == 0:
         if len(backend.recent_frames) == 0:
             continue
@@ -136,7 +138,6 @@ def main():
     font_artist = pygame.font.SysFont(custom_font, artist_size, bold=True)
     font_title = pygame.font.SysFont(custom_font, title_size, bold=True)
     song_fonts = font_artist, font_title
-    layout = 0
 
     # Create thread for getting song info
     t = threading.Thread(target=get_song_info)
@@ -192,8 +193,8 @@ def main():
                     else:
                         screen = pygame.display.set_mode(size, pygame.NOFRAME)
                 elif event.key == pygame.K_l:
-                    layout = (layout + 1) % 3
-                    bars = build_bars(settings, size[0], layout)
+                    settings.layout = (settings.layout + 1) % 3
+                    bars = build_bars(settings, size[0])
 
         if last_song_title != txt_title:
             # Check to see if the song changed, if so, re-render the text
