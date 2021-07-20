@@ -1,4 +1,5 @@
 import pygame
+from algorythm.collect_media_info import generate_colors
 import algorythm.pygame_textinput as pytxt
 import pickle
 
@@ -45,9 +46,26 @@ class Settings:
         WHITE = (255, 255, 255)
         BACK_COLOR = (30, 30, 30)
         GRAY = (200, 200, 200)
+        BLACK = (0, 0, 0)
+        RED = (255, 0, 0)
+        BLUE = (0, 0, 255)
+        GREEN = (0, 255, 0)
         width, height = size
 
-        # TODO: Call color scheme function, catch exceptions, and create rectangles for palette
+        # Call color scheme function, catch exceptions, and create rectangles for palette
+        time_per_beat, colors = generate_colors()
+        x_color = (width // 3) + 180
+        color_palette = [pygame.Rect(x_color, 350, 20, 20), 
+            pygame.Rect(x_color + 20, 350, 20, 20), 
+            pygame.Rect(x_color + 40, 350, 20, 20), 
+            pygame.Rect(x_color + 60, 350, 20, 20), 
+            pygame.Rect(x_color + 80, 350, 20, 20)]
+
+        sample_colors = [pygame.Rect(x_color, 330, 20, 20), 
+            pygame.Rect(x_color + 20, 330, 20, 20), 
+            pygame.Rect(x_color + 40, 330, 20, 20), 
+            pygame.Rect(x_color + 60, 330, 20, 20), 
+            pygame.Rect(x_color + 80, 330, 20, 20)]
 
         # Text Input
         text_inputs = [pytxt.TextInput(str(self.sensitivity), max_string_length=4),
@@ -86,7 +104,8 @@ class Settings:
             font_options.render('Bar Height:', True, WHITE, BACK_COLOR),
             font_options.render('Bar Gap:', True, WHITE, BACK_COLOR),
             font_options.render('Bar Count:', True, WHITE, BACK_COLOR),
-            font_options.render('Bar Color (Hex):', True, WHITE, BACK_COLOR)]
+            font_options.render('Bar Color (Hex):', True, WHITE, BACK_COLOR),
+            font_options.render('Bar Color (Gradient):', True, WHITE, BACK_COLOR)]
 
         song_opt_imgs = [font_options.render('Artist Text Size:', True, WHITE, BACK_COLOR),
             font_options.render('Title Text Size:', True, WHITE, BACK_COLOR),
@@ -155,6 +174,21 @@ class Settings:
                 screen.blit(img, (x_pos, y_pos))
                 screen.blit(text_inputs[index].get_surface(), (x_pos + 180, y_pos))
                 text_inputs[index].set_pos((x_pos + 180, y_pos))
+
+            # Display sample color rectangles
+            pygame.draw.rect(screen, RED, sample_colors[0])
+            pygame.draw.rect(screen, BLUE, sample_colors[1])
+            pygame.draw.rect(screen, GREEN, sample_colors[2])
+            pygame.draw.rect(screen, WHITE, sample_colors[3])
+            pygame.draw.rect(screen, BLACK, sample_colors[4])
+
+
+            # Display color palette for gradient
+            pygame.draw.rect(screen, colors[0], color_palette[0])
+            pygame.draw.rect(screen, colors[1], color_palette[1])
+            pygame.draw.rect(screen, colors[2], color_palette[2])
+            pygame.draw.rect(screen, colors[3], color_palette[3])
+            pygame.draw.rect(screen, colors[4], color_palette[4])
 
             # Display Music Options
             y_pos = 60
