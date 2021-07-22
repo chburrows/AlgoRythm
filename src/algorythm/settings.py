@@ -54,6 +54,7 @@ class Settings:
 
         # Call color scheme function, catch exceptions, and create rectangles for palette
         time_per_beat, colors = generate_colors()
+        sample_rgb_colors = [RED, GREEN, BLUE, WHITE, BLACK]
         x_color = (width // 3) + 180
         color_palette = [pygame.Rect(x_color, 350, 20, 20), 
             pygame.Rect(x_color + 20, 350, 20, 20), 
@@ -128,7 +129,12 @@ class Settings:
                     # Check if obj is clicked on using something such as:
                     # if RectObj.collidepoint(pos)
                     # TODO: Check if color palette rectangle was pressed, and assign its color to settings b_color and/or text_color
-
+                    for index in sample_colors:
+                        if sample_colors[index].collidepoint(pos):
+                            self.b_color = sample_rgb_colors[index]
+                    for index in color_palette:
+                        if color_palette[index].collidepoint(pos):
+                            self.b_color = colors[index]
 
             # If collecting input from a text box, check if there was an update to value, then assign it to settings attribute
             try:
@@ -176,11 +182,11 @@ class Settings:
                 text_inputs[index].set_pos((x_pos + 180, y_pos))
 
             # Display sample color rectangles
-            pygame.draw.rect(screen, RED, sample_colors[0])
-            pygame.draw.rect(screen, BLUE, sample_colors[1])
-            pygame.draw.rect(screen, GREEN, sample_colors[2])
-            pygame.draw.rect(screen, WHITE, sample_colors[3])
-            pygame.draw.rect(screen, BLACK, sample_colors[4])
+            pygame.draw.rect(screen, sample_rgb_colors[0], sample_colors[0])
+            pygame.draw.rect(screen, sample_rgb_colors[1], sample_colors[1])
+            pygame.draw.rect(screen, sample_rgb_colors[2], sample_colors[2])
+            pygame.draw.rect(screen, sample_rgb_colors[3], sample_colors[3])
+            pygame.draw.rect(screen, sample_rgb_colors[4], sample_colors[4])
 
 
             # Display color palette for gradient
