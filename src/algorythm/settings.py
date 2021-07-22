@@ -43,30 +43,38 @@ class Settings:
         return temp
 
     def draw(self, screen, clock, size):
-        WHITE = (255, 255, 255)
         BACK_COLOR = (30, 30, 30)
+
+        WHITE = (255, 255, 255)
         GRAY = (200, 200, 200)
         BLACK = (0, 0, 0)
         RED = (255, 0, 0)
         BLUE = (0, 0, 255)
         GREEN = (0, 255, 0)
+
         width, height = size
 
-        # Call color scheme function, catch exceptions, and create rectangles for palette
-        time_per_beat, colors = generate_colors()
-        sample_rgb_colors = [RED, GREEN, BLUE, WHITE, BLACK]
-        x_color = (width // 3) + 180
-        color_palette = [pygame.Rect(x_color, 350, 20, 20), 
-            pygame.Rect(x_color + 20, 350, 20, 20), 
-            pygame.Rect(x_color + 40, 350, 20, 20), 
-            pygame.Rect(x_color + 60, 350, 20, 20), 
-            pygame.Rect(x_color + 80, 350, 20, 20)]
+        sample_rgb_colors = [RED, GREEN, BLUE, WHITE, GRAY, BLACK]
+        colors = None
 
-        sample_colors = [pygame.Rect(x_color, 330, 20, 20), 
-            pygame.Rect(x_color + 20, 330, 20, 20), 
-            pygame.Rect(x_color + 40, 330, 20, 20), 
-            pygame.Rect(x_color + 60, 330, 20, 20), 
-            pygame.Rect(x_color + 80, 330, 20, 20)]
+        # Call color scheme function, catch exceptions, and create rectangles for palette
+        time_per_beat, colors_hex = generate_colors(len(sample_rgb_colors))
+        
+        x_color = (width // 3) + 10
+        y_color = 385
+
+        # Ensure colors were found
+        if colors_hex is not None:
+            colors = []
+            color_palette = []
+            for i in range(len(colors_hex)):
+                colors.append(hex_to_rgb(colors_hex[i]))
+                color_palette.append(pygame.Rect(x_color + (20*i), y_color, 20, 20))
+
+        sample_colors = []
+        for i in range(len(sample_rgb_colors)):
+            sample_colors.append(pygame.Rect(x_color + (20*i), y_color+20, 20, 20))
+
 
         # Text Input
         text_inputs = [pytxt.TextInput(str(self.sensitivity), max_string_length=4),
@@ -129,12 +137,13 @@ class Settings:
                     # Check if obj is clicked on using something such as:
                     # if RectObj.collidepoint(pos)
                     # TODO: Check if color palette rectangle was pressed, and assign its color to settings b_color and/or text_color
-                    for index in sample_colors:
-                        if sample_colors[index].collidepoint(pos):
-                            self.b_color = sample_rgb_colors[index]
-                    for index in color_palette:
-                        if color_palette[index].collidepoint(pos):
-                            self.b_color = colors[index]
+                    for i, s_rect in enumerate(sample_colors):
+                        if s_rect.collidepoint(pos):
+                            self.b_color = sample_rgb_colors[i]
+                    if colors is not None:
+                        for index, c_rect in enumerate(color_palette):
+                            if c_rect.collidepoint(pos):
+                                self.b_color = colors[index]
 
             # If collecting input from a text box, check if there was an update to value, then assign it to settings attribute
             try:
@@ -178,23 +187,18 @@ class Settings:
             for index, img in enumerate(opt_imgs):
                 y_pos += 30 + (30 if index == 3 else 0)
                 screen.blit(img, (x_pos, y_pos))
-                screen.blit(text_inputs[index].get_surface(), (x_pos + 180, y_pos))
-                text_inputs[index].set_pos((x_pos + 180, y_pos))
+                if index < len(text_inputs):
+                    screen.blit(text_inputs[index].get_surface(), (x_pos + 180, y_pos))
+                    text_inputs[index].set_pos((x_pos + 180, y_pos))
 
             # Display sample color rectangles
-            pygame.draw.rect(screen, sample_rgb_colors[0], sample_colors[0])
-            pygame.draw.rect(screen, sample_rgb_colors[1], sample_colors[1])
-            pygame.draw.rect(screen, sample_rgb_colors[2], sample_colors[2])
-            pygame.draw.rect(screen, sample_rgb_colors[3], sample_colors[3])
-            pygame.draw.rect(screen, sample_rgb_colors[4], sample_colors[4])
-
+            for i in range(len(sample_colors)):
+                pygame.draw.rect(screen, sample_rgb_colors[i], sample_colors[i])
 
             # Display color palette for gradient
-            pygame.draw.rect(screen, colors[0], color_palette[0])
-            pygame.draw.rect(screen, colors[1], color_palette[1])
-            pygame.draw.rect(screen, colors[2], color_palette[2])
-            pygame.draw.rect(screen, colors[3], color_palette[3])
-            pygame.draw.rect(screen, colors[4], color_palette[4])
+            if colors is not None:
+                for ind, col in enumerate(colors):
+                    pygame.draw.rect(screen, col, color_palette[ind])
 
             # Display Music Options
             y_pos = 60
@@ -226,6 +230,9 @@ def rgb_to_hex(rgb=()):
 
 # Convert hex to rgb tuple
 def hex_to_rgb(hex_color):
+    if hex_color[0] == '#':
+        hex_color = hex_color[1:]
+
     if len(hex_color) != 6:
         return None
 

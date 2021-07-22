@@ -10,7 +10,7 @@ import numpy as np
 import scipy
 import scipy.misc
 import scipy.cluster
-import spotipy_implementation as sp
+import algorythm.spotipy_implementation as sp
 
 async def winrtapi():
     global MediaManager, info
@@ -60,7 +60,6 @@ def collect_title_artist():
         info_dict['genres'] = list(info_dict['genres'])
 
         title_artist = [info_dict['title'], info_dict['artist']]
-
         return title_artist
     else:
         return ["N/A", "N/A"]
@@ -89,21 +88,27 @@ def generate_colors_from_img(img, num_colors):
     codes, dist = scipy.cluster.vq.kmeans(ar, NUM_CLUSTERS)
     vecs, dist = scipy.cluster.vq.vq(ar, codes)         # assign codes
     counts, bins = numpy.histogram(vecs, len(codes))    # count occurrences
-
+    num_colors = len(counts) if len(counts) < num_colors else num_colors
     max_indeces = numpy.argpartition(counts, -1 * num_colors)[-1 * num_colors:]
-    colors = ["#" + binascii.hexlify(bytearray(int(c) for c in codes[i])).decode('ascii') for i in max_indeces]
+    colors = [binascii.hexlify(bytearray(int(c) for c in codes[i])).decode('ascii') for i in max_indeces]
     return colors
 
-def generate_colors():
+def generate_colors(count=0):
     curr_media_info = collect_title_artist()
+    # Check if no currently playing track was found
+    if curr_media_info == ["N/A", "N/A"] or '' in curr_media_info:
+        return (None, None)
+
     track_id = sp.search_for_id(*curr_media_info)
     track_img_url = sp.get_album_art(track_id)
     pil_img = get_background_img(track_img_url)
     features = sp.get_audio_features(track_id)
     tempo = float(features['track']['tempo'])
     time_per_beat = 60.0 / tempo # in sec
-    time_sig = features['track']['time_signature']
-    colors = generate_colors_from_img(pil_img, time_sig)
-    return {'time_per_beat':time_per_beat, 'colors':colors}
+    if count == 0:
+        # Use time_sig for number of colors
+        count = features['track']['time_signature']
+    colors = generate_colors_from_img(pil_img, count)
+    return (time_per_beat, colors)
 if __name__ == '__main__':
     print(generate_colors())
