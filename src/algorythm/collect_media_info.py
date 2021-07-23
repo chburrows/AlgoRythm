@@ -104,6 +104,6 @@ def generate_colors():
     time_per_beat = 60.0 / tempo # in sec
     time_sig = features['track']['time_signature']
     colors = generate_colors_from_img(pil_img, time_sig)
-    return {'time_per_beat':time_per_beat, 'colors':colors}
+    return {'time_per_beat':time_per_beat*time_sig, 'colors':colors, 'album_art':pil_img}
 if __name__ == '__main__':
     print(generate_colors())
