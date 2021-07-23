@@ -28,31 +28,56 @@ class AudioBar:
         self.x = self.width * self.index + (self.index * self.gap)
         self.draw_y = self.max_height
     def update(self, settings, intensity, dt, text_gap, color=None):
-        newPos = self.max_height * (1 - intensity)
+        newPos = self.max_height * (1 - intensity * self.index / 20)
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
-        self.draw_y = max(0, min(self.max_height,self.draw_y))
+        self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
-        self.rect=[self.x, (size[1]-self.max_height-text_gap)+self.draw_y,self.width, bar_height]
-
+        self.rect = [self.x, (size[1] - self.max_height - text_gap) + self.draw_y, self.width, bar_height]
         if color is not None:
             self.color = color
     def draw(self, screen):
         #draw the rectangle to the screen using pygame draw rect
         pygame.draw.rect(screen, self.color, self.rect, 0)
 
+class DualBar(AudioBar):
+    def update(self, settings, intensity, dt, text_gap):
+        newPos = self.max_height * (1 - intensity * self.index / 20)
+        accel = (newPos - self.draw_y) * settings.smoothing
+        self.draw_y += accel * dt
+        self.draw_y = max(0, min(self.max_height, self.draw_y))
+        bar_height = self.max_height-self.draw_y
+        self.rect = [self.x, (size[1]-self.max_height-text_gap) + self.draw_y - 180 + bar_height/2, self.width, bar_height]
+
+class InvertedBar(AudioBar):
+    def update(self, settings, intensity, dt, text_gap):
+        newPos = self.max_height * (1 - intensity * self.index / 20)
+        accel = (newPos - self.draw_y) * settings.smoothing
+        self.draw_y += accel * dt
+        self.draw_y = max(0, min(self.max_height, self.draw_y))
+        bar_height = self.max_height-self.draw_y
+        self.rect = [self.x, 0, self.width, bar_height]
+
 def build_bars(settings, width):
     bars = []
+    layout = settings.layout
+
     while len(bars) == 0:
         if len(backend.recent_frames) == 0:
             continue
-        # creation of the AudioBar objects and add them to the list
+        # creation of the *Bar objects and add them to the list
         # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
         settings.b_width = ceil((width - (settings.b_count * settings.b_gap)) / len(backend.last_freqs))
-        for i in range(len(backend.last_freqs)):
-            bars.append(AudioBar(settings, i))
+        if layout == 0:
+            for i in range(len(backend.last_freqs)):
+                bars.append(AudioBar(settings, i))
+        elif layout == 1:
+            for i in range(len(backend.last_freqs)):
+                bars.append(InvertedBar(settings, i))
+        else:
+            for i in range(len(backend.last_freqs)):
+                bars.append(DualBar(settings, i))
     return bars
-
 
 def get_song_info():
     global txt_title, txt_artist, color_obj
@@ -116,7 +141,8 @@ def main():
 
     hint_imgs = [font_hint.render('Key Hints:', True, WHITE, INVIS),
         font_hint2.render('Press S for Settings', True, WHITE, INVIS),
-        font_hint2.render('Press M to toggle window border', True, WHITE, INVIS)]
+        font_hint2.render('Press M to toggle window border', True, WHITE, INVIS),
+        font_hint2.render('Press L to toggle layout', True, WHITE, INVIS)]
 
     # Song Desciption Text
     # Allow for custom fonts in future
@@ -126,7 +152,6 @@ def main():
     font_artist = pygame.font.SysFont(custom_font, artist_size, bold=True)
     font_title = pygame.font.SysFont(custom_font, title_size, bold=True)
     song_fonts = font_artist, font_title
-
 
     # Create thread for getting song info
     t = threading.Thread(target=get_song_info)
@@ -186,6 +211,9 @@ def main():
                         screen = pygame.display.set_mode(size)
                     else:
                         screen = pygame.display.set_mode(size, pygame.NOFRAME)
+                elif event.key == pygame.K_l:
+                    settings.layout = (settings.layout + 1) % 3
+                    bars = build_bars(settings, size[0])
 
         if last_song_title != txt_title:
             # Check to see if the song changed, if so, re-render the text
