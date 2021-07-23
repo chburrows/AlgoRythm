@@ -41,22 +41,26 @@ class AudioBar:
         pygame.draw.rect(screen, self.color, self.rect, 0)
 
 class DualBar(AudioBar):
-    def update(self, settings, intensity, dt, text_gap):
+    def update(self, settings, intensity, dt, text_gap, color=None):
         newPos = self.max_height * (1 - intensity * self.index / 20)
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
         self.rect = [self.x, (size[1]-self.max_height-text_gap) + self.draw_y - 180 + bar_height/2, self.width, bar_height]
+        if color is not None:
+            self.color = color
 
 class InvertedBar(AudioBar):
-    def update(self, settings, intensity, dt, text_gap):
+    def update(self, settings, intensity, dt, text_gap, color=None):
         newPos = self.max_height * (1 - intensity * self.index / 20)
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
         self.rect = [self.x, 0, self.width, bar_height]
+        if color is not None:
+            self.color = color
 
 def build_bars(settings, width):
     bars = []
