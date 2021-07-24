@@ -37,20 +37,21 @@ async def winrtapi_cover(info):
     # create the current_media_info dict with the earlier code first
     thumb_stream_ref = info['thumbnail']
 
-    # 5MB (5 million byte) buffer - thumbnail unlikely to be larger
-    thumb_read_buffer = Buffer(5000000)
+    if thumb_stream_ref is not None:
+        # 5MB (5 million byte) buffer - thumbnail unlikely to be larger
+        thumb_read_buffer = Buffer(5000000)
 
-    # copies data from data stream reference into buffer created above
-    await read_stream_into_buffer(thumb_stream_ref, thumb_read_buffer)
+        # copies data from data stream reference into buffer created above
+        await read_stream_into_buffer(thumb_stream_ref, thumb_read_buffer)
 
-    # reads data (as bytes) from buffer
-    try:
-        print(thumb_read_buffer.length)  # Having this print statement here makes it get the image consistently?
-        buffer_reader = DataReader.from_buffer(thumb_read_buffer)
-        data = buffer_reader.read_bytes(thumb_read_buffer.length) # byte buffer
-        return data
-    except:
-        return []
+        # reads data (as bytes) from buffer
+        try:
+            buffer_reader = DataReader.from_buffer(thumb_read_buffer)
+            data = buffer_reader.read_bytes(thumb_read_buffer.length) # byte buffer
+            return data
+        except:
+            return []
+    return []
 
 def collect_title_artist():
     info = asyncio.run(winrtapi())
@@ -79,11 +80,11 @@ def collect_album_cover():
         # Create Image from buffer object
         if len(img_data) != 0:
             return Image.open(BytesIO(bytearray(img_data)))
-    return None
+    return "No Info"
                 
 if __name__ == '__main__':
-    title, artist = curr_media_info = collect_title_artist()
-    print(curr_media_info)
+    #title, artist = curr_media_info = collect_title_artist()
+    #print(curr_media_info)
     start = time.time()
     print(collect_album_cover())
     print(time.time() - start)

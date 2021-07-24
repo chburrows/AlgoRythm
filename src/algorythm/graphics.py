@@ -49,7 +49,6 @@ def build_bars(settings, width):
             bars.append(AudioBar(settings, i))
     return bars
 
-
 def get_song_info():
     global txt_title, txt_artist
     txt_title, txt_artist =  media.collect_title_artist()
@@ -208,7 +207,10 @@ def main():
             # Check to see if the song changed, if so, re-render the text
             artist_img, title_img = get_song_imgs(settings, song_fonts)
             last_song_title = txt_title
+            # Reset Cover Img and check for new cover
             song_cover = None
+            cover_img = None
+            cover_set = False
             pygame.event.post(COVER_EVENT)
 
         if not cover_set and song_cover is not None and not t2.is_alive():
