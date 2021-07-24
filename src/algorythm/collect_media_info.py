@@ -77,9 +77,8 @@ def generate_colors(count=0):
     features = sp.get_audio_features(track_id)
     tempo = float(features['track']['tempo'])
     time_per_beat = 60.0 / tempo # in sec
-    if count == 0:
-        # Use time_sig for number of colors
-        count = features['track']['time_signature']
+    time_sig = features['track']['time_signature']
+    count = time_sig if count == 0 else count
     colors = generate_colors_from_img(pil_img, count)
     return {'time_per_beat':time_per_beat*time_sig, 'colors':colors, 'album_art':pil_img}
   
