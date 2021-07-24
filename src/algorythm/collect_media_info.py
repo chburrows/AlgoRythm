@@ -72,6 +72,10 @@ def generate_colors(count=0):
         return {'time_per_beat':1, 'colors':None, 'album_art':None}
 
     track_id = sp.search_for_id(*curr_media_info)
+    if track_id is None:
+        # Ensure that track exists
+        return {'time_per_beat':1, 'colors':None, 'album_art':None}
+
     track_img_url = sp.get_album_art(track_id)
     pil_img = get_background_img(track_img_url)
     features = sp.get_audio_features(track_id)
