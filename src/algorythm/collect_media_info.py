@@ -1,12 +1,19 @@
-#  function methodology for obtaining media information adapted from https://stackoverflow.com/questions/65011660/how-can-i-get-the-title-of-the-currently-playing-media-in-windows-10-with-python
-#  all intellectual credit given to original author
 import asyncio
-from time import time 
+from PIL import Image
+import requests
+import tempfile
+from io import BytesIO
+import binascii
+import numpy as np
+from scipy import cluster
+import scipy.cluster
+import algorythm.spotipy_implementation as sp
 
 async def winrtapi():
     global MediaManager, info
 
     import winrt
+    # Song info    
     from winrt.windows.media.control import \
         CurrentSessionChangedEventArgs, GlobalSystemMediaTransportControlsSessionManager as MediaManager
 
@@ -32,9 +39,45 @@ def collect_title_artist():
     else:
         return ["N/A", "N/A"]
 
+def get_background_img(img_url):
+    buffer = tempfile.SpooledTemporaryFile(max_size=1e9)
+    r = requests.get(img_url, stream=True)
+    if r.status_code == 200:
+        downloaded = 0
+        for chunk in r.iter_content(chunk_size=1024):
+            downloaded += len(chunk)
+            buffer.write(chunk)
+        buffer.seek(0)
+        i = Image.open(BytesIO(buffer.read()))
+    buffer.close()
+    return i
+
+def generate_colors_from_img(img, num_colors):
+    NUM_CLUSTERS = 5
+
+    rgb_img = img.convert('RGB')
+    ar = np.asarray(rgb_img)
+    shape = ar.shape
+    ar = ar.reshape(np.product(shape[:2]), shape[2]).astype(float)
+    codes, dist = scipy.cluster.vq.kmeans(ar, NUM_CLUSTERS)
+    vecs, dist = scipy.cluster.vq.vq(ar, codes)         # assign codes
+    counts, bins = np.histogram(vecs, len(codes))    # count occurrences
+
+    max_indeces = np.argpartition(counts, -1 * num_colors)[-1 * num_colors:]
+    colors = ["#" + binascii.hexlify(bytearray(int(c) for c in codes[i])).decode('ascii') for i in max_indeces]
+    return colors
+
+def generate_colors():
+    curr_media_info = collect_title_artist()
+    track_id = sp.search_for_id(*curr_media_info)
+    track_img_url = sp.get_album_art(track_id)
+    pil_img = get_background_img(track_img_url)
+    features = sp.get_audio_features(track_id)
+    tempo = float(features['track']['tempo'])
+    time_per_beat = 60.0 / tempo # in sec
+    time_sig = features['track']['time_signature']
+    colors = generate_colors_from_img(pil_img, time_sig)
+    return {'time_per_beat':time_per_beat*time_sig, 'colors':colors, 'album_art':pil_img}
 
 if __name__ == '__main__':
-    start = time()
-    title, artist = curr_media_info = collect_title_artist()
-    end = time() - start
-    print(curr_media_info, end)
+    print(generate_colors())
