@@ -1,13 +1,12 @@
-#  function methodology for obtaining media information adapted from https://stackoverflow.com/questions/65011660/how-can-i-get-the-title-of-the-currently-playing-media-in-windows-10-with-python
-#  all intellectual credit given to original author
 import asyncio
-from time import time 
 from PIL import Image
-import math
-import numpy
-import threading
+import requests
+import tempfile
 from io import BytesIO
-import time
+import binascii
+import numpy as np
+from scipy import cluster
+import algorythm.spotipy_implementation as sp
 
 
 async def winrtapi():
@@ -24,35 +23,6 @@ async def winrtapi():
     else:
         return None
 
-async def winrtapi_cover(info):
-    # Cover Art
-    import winrt
-    from winrt.windows.storage.streams import \
-        DataReader, Buffer, InputStreamOptions
-
-    async def read_stream_into_buffer(stream_ref, buffer):
-        readable_stream = await stream_ref.open_read_async()
-        readable_stream.read_async(buffer, buffer.capacity, InputStreamOptions.READ_AHEAD)
-    
-    # create the current_media_info dict with the earlier code first
-    thumb_stream_ref = info['thumbnail']
-
-    if thumb_stream_ref is not None:
-        # 5MB (5 million byte) buffer - thumbnail unlikely to be larger
-        thumb_read_buffer = Buffer(5000000)
-
-        # copies data from data stream reference into buffer created above
-        await read_stream_into_buffer(thumb_stream_ref, thumb_read_buffer)
-
-        # reads data (as bytes) from buffer
-        try:
-            buffer_reader = DataReader.from_buffer(thumb_read_buffer)
-            data = buffer_reader.read_bytes(thumb_read_buffer.length) # byte buffer
-            return data
-        except:
-            return []
-    return []
-
 def collect_title_artist():
     info = asyncio.run(winrtapi())
 
@@ -62,30 +32,55 @@ def collect_title_artist():
         info_dict['genres'] = list(info_dict['genres'])
 
         title_artist = [info_dict['title'], info_dict['artist']]
-
         return title_artist
     else:
         return ["N/A", "N/A"]
 
-def collect_album_cover():
-    # Collect song info attributes
-    info = asyncio.run(winrtapi())
+def get_background_img(img_url):
+    buffer = tempfile.SpooledTemporaryFile(max_size=1e9)
+    r = requests.get(img_url, stream=True)
+    if r.status_code == 200:
+        downloaded = 0
+        for chunk in r.iter_content(chunk_size=1024):
+            downloaded += len(chunk)
+            buffer.write(chunk)
+        buffer.seek(0)
+        i = Image.open(BytesIO(buffer.read()))
+    buffer.close()
+    return i
 
-    if info is not None:
-        # Convert info to dictionary
-        info_dict = {song_attr: info.__getattribute__(song_attr) for song_attr in dir(info) if song_attr[0] != '_'}
-        
-        # Pass in dictionary and retrieve img byte buffer
-        img_data = asyncio.run(winrtapi_cover(info_dict))
-        # Create Image from buffer object
-        if len(img_data) != 0:
-            return Image.open(BytesIO(bytearray(img_data)))
-    return "No Info"
-                
-if __name__ == '__main__':
-    #title, artist = curr_media_info = collect_title_artist()
-    #print(curr_media_info)
-    start = time.time()
-    print(collect_album_cover())
-    print(time.time() - start)
+def generate_colors_from_img(img, num_colors):
+    NUM_CLUSTERS = 5
+
+    rgb_img = img.convert('RGB')
+    ar = np.asarray(rgb_img)
+    shape = ar.shape
+    ar = ar.reshape(np.product(shape[:2]), shape[2]).astype(float)
+    codes, dist = cluster.vq.kmeans(ar, NUM_CLUSTERS)
+    vecs, dist = cluster.vq.vq(ar, codes)         # assign codes
+    counts, bins = np.histogram(vecs, len(codes))    # count occurrences
+    num_colors = len(counts) if len(counts) < num_colors else num_colors
     
+    max_indeces = np.argpartition(counts, -1 * num_colors)[-1 * num_colors:]
+    colors = [binascii.hexlify(bytearray(int(c) for c in codes[i])).decode('ascii') for i in max_indeces]
+    return colors
+
+def generate_colors(count=0):
+    curr_media_info = collect_title_artist()
+    # Check if no currently playing track was found
+    if curr_media_info == ["N/A", "N/A"] or '' in curr_media_info:
+        return {'time_per_beat':1, 'colors':None, 'album_art':None}
+
+    track_id = sp.search_for_id(*curr_media_info)
+    track_img_url = sp.get_album_art(track_id)
+    pil_img = get_background_img(track_img_url)
+    features = sp.get_audio_features(track_id)
+    tempo = float(features['track']['tempo'])
+    time_per_beat = 60.0 / tempo # in sec
+    time_sig = features['track']['time_signature']
+    count = time_sig if count == 0 else count
+    colors = generate_colors_from_img(pil_img, count)
+    return {'time_per_beat':time_per_beat*time_sig, 'colors':colors, 'album_art':pil_img}
+  
+if __name__ == '__main__':
+    print(generate_colors())

@@ -1,5 +1,6 @@
 import pygame
-import pygame_textinput as pytxt
+from algorythm.collect_media_info import generate_colors
+import algorythm.pygame_textinput as pytxt
 import pickle
 
 # Textbox reference https://stackoverflow.com/questions/46390231/how-can-i-create-a-text-input-box-with-pygame
@@ -8,7 +9,8 @@ class Settings:
     def __init__(self, 
             sensitivity = 0, smoothing = 7, multiplier = 25, 
             b_width = 15, b_height = 150, b_gap = 2, b_count = 64, b_color = (255, 255, 255), 
-            artist_size = 48, title_size = 32, text_color = (255, 255, 255)
+            artist_size = 48, title_size = 32, text_color = (255, 255, 255),
+            layout = 0
         ):
         # All are public
         # Vis Settings
@@ -28,6 +30,10 @@ class Settings:
         self.title_size = title_size
         self.text_color = text_color
 
+        # Layout setting
+        # Layout is an int that corresponds to type. 0 = Normal, 1 = Inverted, 2 = Dual
+        self.layout = layout
+
     def save(self, filename):
         # pickle and save settings to file
         savefile = open(filename, 'wb')
@@ -42,10 +48,38 @@ class Settings:
         return temp
 
     def draw(self, screen, clock, size):
-        WHITE = (255, 255, 255)
         BACK_COLOR = (30, 30, 30)
+
+        WHITE = (255, 255, 255)
         GRAY = (200, 200, 200)
+        BLACK = (0, 0, 0)
+        RED = (255, 0, 0)
+        BLUE = (0, 0, 255)
+        GREEN = (0, 255, 0)
+
         width, height = size
+
+        sample_rgb_colors = [RED, GREEN, BLUE, WHITE, GRAY, BLACK]
+        colors = None
+
+        # Call color scheme function, catch exceptions, and create rectangles for palette
+        colors_hex = generate_colors(len(sample_rgb_colors))['colors']
+        
+        x_color = (width // 3) + 10
+        y_color = 385
+
+        # Ensure colors were found
+        if colors_hex is not None:
+            colors = []
+            color_palette = []
+            for i in range(len(colors_hex)):
+                colors.append(hex_to_rgb(colors_hex[i]))
+                color_palette.append(pygame.Rect(x_color + (20*i), y_color, 20, 20))
+
+        sample_colors = []
+        for i in range(len(sample_rgb_colors)):
+            sample_colors.append(pygame.Rect(x_color + (20*i), y_color+20, 20, 20))
+
 
         # Text Input
         text_inputs = [pytxt.TextInput(str(self.sensitivity), max_string_length=4),
@@ -61,17 +95,22 @@ class Settings:
             pytxt.TextInput(str(self.title_size), max_string_length=3),
             pytxt.TextInput(rgb_to_hex(self.text_color), max_string_length=6)]
 
-        # Titles
+        # Setting Titles
+        # Create font with a set size
         font = pygame.font.SysFont(None, 32)
+        # Render an image with a text phrase using font
         title_img = font.render('Settings', True, GRAY, BACK_COLOR)
         vert_prop_img = font.render('Visualizer Properties', True, WHITE, BACK_COLOR)
         music_img = font.render('Music Properties', True, WHITE, BACK_COLOR)
         font_hint = pygame.font.SysFont(None, 24, italic=True)
         hint_img = font_hint.render("Press enter to confirm value.", True, GRAY, BACK_COLOR)
         
-        # Options
+        # Option text
+        # NOTE: To add a new font size for text follow the format below, changing the number to the desired font size
         font_options = pygame.font.SysFont(None, 28)
         
+        # NOTE: Then render the image using above font with ("Text", True, (R,G,B), BACK_COLOR)
+        # If displaying multiple text elements in a row, it is easier to store them in an array
         opt_imgs = [font_options.render('Sensitivity (db):', True, WHITE, BACK_COLOR),
             font_options.render('Smoothing Level:', True, WHITE, BACK_COLOR),
             font_options.render('Multiplier:', True, WHITE, BACK_COLOR),
@@ -79,12 +118,14 @@ class Settings:
             font_options.render('Bar Height:', True, WHITE, BACK_COLOR),
             font_options.render('Bar Gap:', True, WHITE, BACK_COLOR),
             font_options.render('Bar Count:', True, WHITE, BACK_COLOR),
-            font_options.render('Bar Color (Hex):', True, WHITE, BACK_COLOR)]
+            font_options.render('Bar Color (Hex):', True, WHITE, BACK_COLOR),
+            font_options.render('Bar Color (Gradient):', True, WHITE, BACK_COLOR)]
 
         song_opt_imgs = [font_options.render('Artist Text Size:', True, WHITE, BACK_COLOR),
             font_options.render('Title Text Size:', True, WHITE, BACK_COLOR),
             font_options.render('Text Color:', True, WHITE, BACK_COLOR)]
 
+        # Starting x_pos for text options
         x_pos = width // 3
             
         while True:
@@ -95,8 +136,21 @@ class Settings:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_s:
                         return False, True
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    # If left mouse button was clicked, get mouse position
+                    pos = pygame.mouse.get_pos()
+                    # Check if obj is clicked on using something such as:
+                    # if RectObj.collidepoint(pos)
+                    # TODO: Check if color palette rectangle was pressed, and assign its color to settings b_color and/or text_color
+                    for i, s_rect in enumerate(sample_colors):
+                        if s_rect.collidepoint(pos):
+                            self.b_color = sample_rgb_colors[i]
+                    if colors is not None:
+                        for index, c_rect in enumerate(color_palette):
+                            if c_rect.collidepoint(pos):
+                                self.b_color = colors[index]
 
-            # prob a better way to do this but tired
+            # If collecting input from a text box, check if there was an update to value, then assign it to settings attribute
             try:
                 if text_inputs[0].update(events):
                     self.sensitivity = int(text_inputs[0].get_text())
@@ -121,10 +175,12 @@ class Settings:
                 elif song_inputs[2].update(events):
                     self.text_color = hex_to_rgb(song_inputs[2].get_text())
             except ValueError:
+                # Validate input
                 print("Error: Invalid input, NaN.")
 
             screen.fill( BACK_COLOR )
 
+            # NOTE: Text has to be blit to screen using the img rendered above. Just use screen.blit(img, (xpos, ypos))
             # Display title text
             screen.blit(title_img, (20, 20))
             screen.blit(vert_prop_img, (x_pos, 20))
@@ -136,8 +192,18 @@ class Settings:
             for index, img in enumerate(opt_imgs):
                 y_pos += 30 + (30 if index == 3 else 0)
                 screen.blit(img, (x_pos, y_pos))
-                screen.blit(text_inputs[index].get_surface(), (x_pos + 180, y_pos))
-                text_inputs[index].set_pos((x_pos + 180, y_pos))
+                if index < len(text_inputs):
+                    screen.blit(text_inputs[index].get_surface(), (x_pos + 180, y_pos))
+                    text_inputs[index].set_pos((x_pos + 180, y_pos))
+
+            # Display sample color rectangles
+            for i in range(len(sample_colors)):
+                pygame.draw.rect(screen, sample_rgb_colors[i], sample_colors[i])
+
+            # Display color palette for gradient
+            if colors is not None:
+                for ind, col in enumerate(colors):
+                    pygame.draw.rect(screen, col, color_palette[ind])
 
             # Display Music Options
             y_pos = 60
@@ -146,6 +212,9 @@ class Settings:
                 screen.blit(text, (x_pos*2, y_pos))
                 screen.blit(song_inputs[ind].get_surface(), (x_pos*2+180, y_pos))
                 song_inputs[ind].set_pos((x_pos*2+180, y_pos))
+
+
+            # NOTE: For anything else that needs to be displayed, create an object with pygame (such as Rect), and draw it here with pygame.draw
 
             pygame.display.flip()
             clock.tick(30)
@@ -166,6 +235,9 @@ def rgb_to_hex(rgb=()):
 
 # Convert hex to rgb tuple
 def hex_to_rgb(hex_color):
+    if hex_color[0] == '#':
+        hex_color = hex_color[1:]
+
     if len(hex_color) != 6:
         return None
 
