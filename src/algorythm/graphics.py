@@ -14,7 +14,7 @@ import win32con
 import win32gui
 
 import algorythm.backend as backend
-from algorythm.settings import Settings
+from algorythm.settings import Settings, rgb_to_hex, hex_to_rgb
 
 class AudioBar:
     def __init__(self, settings, i):
@@ -28,7 +28,7 @@ class AudioBar:
         self.x = self.width * self.index + (self.index * self.gap)
         self.draw_y = self.max_height
     def update(self, settings, intensity, dt, text_gap, color=None):
-        newPos = self.max_height * (1 - intensity * self.index / 20)
+        newPos = self.max_height * (1 - intensity * (self.index+1) / 20)
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
@@ -42,7 +42,7 @@ class AudioBar:
 
 class DualBar(AudioBar):
     def update(self, settings, intensity, dt, text_gap, color=None):
-        newPos = self.max_height * (1 - intensity * self.index / 20)
+        newPos = self.max_height * (1 - intensity * (self.index+1) / 20)
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
@@ -53,7 +53,7 @@ class DualBar(AudioBar):
 
 class InvertedBar(AudioBar):
     def update(self, settings, intensity, dt, text_gap, color=None):
-        newPos = self.max_height * (1 - intensity * self.index / 20)
+        newPos = self.max_height * (1 - intensity * (self.index+1) / 20)
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
@@ -86,7 +86,9 @@ def build_bars(settings, width):
 def get_song_info():
     global txt_title, txt_artist, color_obj
     txt_title, txt_artist =  media.collect_title_artist()
-    color_obj = media.generate_colors()
+
+def get_colors():
+    return media.generate_colors()
 
 def get_song_imgs(settings, fonts):
     global txt_artist, txt_title
@@ -100,9 +102,7 @@ def get_song_imgs(settings, fonts):
 
 def mix_colors(colors, mix):
     return [int(sqrt((1 - mix) * colors[0][i]**2 + mix * colors[1][i]**2)) for i in range(3)]
-def hextoRGB(hex_code):
-    h = hex_code.lstrip('#')
-    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
 def pilImageToSurface(pilImage):
     return pygame.image.fromstring(
         pilImage.tobytes(), pilImage.size, pilImage.mode).convert()
@@ -113,7 +113,6 @@ WHITE = (255, 255, 255)
 size = (850, 450)
 
 txt_title, txt_artist = ("Title", "Artist")
-color_obj = {'time_per_beat':1, 'colors':['#ffffff']*4, 'album_art':None}
 
 def main():
     pygame.init()
@@ -168,6 +167,9 @@ def main():
     settings.b_height = size[1] - (artist_img.get_height() + title_img.get_height())
     bars = build_bars(settings, size[0])
 
+    # Get color obj
+    color_obj = get_colors()
+
     # Create custom event for retrieving song info
     GET_SONG = pygame.event.custom_type()
     SONG_EVENT = pygame.event.Event(GET_SONG)
@@ -220,6 +222,8 @@ def main():
         if last_song_title != txt_title:
             # Check to see if the song changed, if so, re-render the text
             artist_img, title_img = get_song_imgs(settings, song_fonts)
+            # And update colors/album cover
+            color_obj = get_colors()
             
         if displaySettings:
             # run after s key has been pressed
@@ -247,11 +251,14 @@ def main():
 
 
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
-        song_colors = color_obj['colors'][:-1] + color_obj['colors'][::-1]
-        color_index = color_index % (len(song_colors) - 1)
-        gradient_colors = [hextoRGB(x) for x in song_colors[color_index:color_index+2]]
-        color_mix = timer / color_obj['time_per_beat']
-        bar_color = mix_colors(gradient_colors,color_mix)
+        if color_obj['colors'] is not None:
+            song_colors = color_obj['colors'][:-1] + color_obj['colors'][::-1]
+            color_index = color_index % (len(song_colors) - 1)
+            gradient_colors = [hex_to_rgb(x) for x in song_colors[color_index:color_index+2]]
+            color_mix = timer / color_obj['time_per_beat']
+            bar_color = mix_colors(gradient_colors,color_mix)
+        else:
+            bar_color = settings.b_color
         for i, bar in enumerate(bars):
             bar.update(settings, backend.last_levels[i] * settings.multiplier, deltaTime, artist_img.get_height() + title_img.get_height(), color=bar_color)
 

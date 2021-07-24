@@ -70,7 +70,8 @@ def generate_colors(count=0):
     curr_media_info = collect_title_artist()
     # Check if no currently playing track was found
     if curr_media_info == ["N/A", "N/A"] or '' in curr_media_info:
-        return (None, None)
+        return {'time_per_beat':1, 'colors':None, 'album_art':None}
+
     track_id = sp.search_for_id(*curr_media_info)
     track_img_url = sp.get_album_art(track_id)
     pil_img = get_background_img(track_img_url)
