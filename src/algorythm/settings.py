@@ -47,7 +47,7 @@ class Settings:
         savefile.close()
         return temp
 
-    def draw(self, screen, clock, size):
+    def draw(self, screen, clock, size, colors_hex):
         BACK_COLOR = (30, 30, 30)
 
         WHITE = (255, 255, 255)
@@ -63,8 +63,6 @@ class Settings:
         colors = None
 
         # Call color scheme function, catch exceptions, and create rectangles for palette
-        colors_hex = generate_colors(len(sample_rgb_colors))['colors']
-        
         x_color = (width // 3) + 10
         y_color = 385
 
