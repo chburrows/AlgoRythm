@@ -107,12 +107,10 @@ def pilImageToSurface(pilImage):
     return pygame.image.fromstring(
         pilImage.tobytes(), pilImage.size, pilImage.mode).convert()
 
-
 # Globals
 INVIS = (1,0,1)
 WHITE = (255, 255, 255)
 size = (850, 450)
-
 
 txt_title, txt_artist = ("Title", "Artist")
 color_obj = {'time_per_beat':1, 'colors':['#ffffff']*4, 'album_art':None}
