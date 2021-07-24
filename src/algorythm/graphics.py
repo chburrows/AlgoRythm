@@ -34,7 +34,7 @@ class AudioBar:
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
-        self.rect = [self.x, (size[1] - self.max_height - text_gap) + self.draw_y, self.width, bar_height]
+        self.rect = [self.x, self.draw_y, self.width, bar_height]
         if color is not None:
             self.color = color
     def draw(self, screen):
@@ -48,7 +48,7 @@ class DualBar(AudioBar):
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
-        self.rect = [self.x, (size[1]-self.max_height-text_gap) + self.draw_y - 180 + bar_height/2, self.width, bar_height]
+        self.rect = [self.x, self.draw_y + bar_height/2 - self.max_height/2, self.width, bar_height]
         if color is not None:
             self.color = color
 
@@ -85,11 +85,19 @@ def build_bars(settings, width):
     return bars
 
 def get_song_info():
-    global txt_title, txt_artist, color_obj
+    global txt_title, txt_artist, cover_obj
     txt_title, txt_artist =  media.collect_title_artist()
 
-def get_colors():
-    return media.generate_colors()
+def get_cover_obj():
+    global cover_obj, song_cover, cover_changed
+    cover_obj = media.generate_colors()
+    pil_img = cover_obj['album_art']
+    if pil_img is not None:
+        song_cover = pygame.image.fromstring(pil_img.tobytes(), pil_img.size, pil_img.mode).convert()
+        cover_changed = True
+    else:
+        # Could set song_cover with a template img here when no cover is found
+        song_cover = None
 
 def get_song_imgs(settings, fonts):
     global txt_artist, txt_title
@@ -101,24 +109,8 @@ def get_song_imgs(settings, fonts):
     title_img = font_title.render(txt_title, True, txt_color, INVIS)
     return artist_img, title_img
 
-def get_song_cover():
-    global song_cover
-    pil_img = media.collect_album_cover()
-    if pil_img is not None:
-        try:
-            song_cover = pygame.image.fromstring(pil_img.tobytes(), pil_img.size, pil_img.mode).convert()
-            print("Song cover set")
-        except:
-            print("Exception with PIL img")
-    else:
-        # TODO: replace with default img
-        print("Error gathering album cover.")
 def mix_colors(colors, mix):
     return [int(sqrt((1 - mix) * colors[0][i]**2 + mix * colors[1][i]**2)) for i in range(3)]
-
-def pilImageToSurface(pilImage):
-    return pygame.image.fromstring(
-        pilImage.tobytes(), pilImage.size, pilImage.mode).convert()
 
 # Globals
 INVIS = (1,0,1)
@@ -126,10 +118,13 @@ WHITE = (255, 255, 255)
 size = (850, 450)
 
 txt_title, txt_artist = ("Title", "Artist")
+
+cover_obj = None
 song_cover = None
+cover_changed = False
 
 def main():
-    global song_cover, txt_title, txt_artist
+    global song_cover, cover_obj, cover_changed, txt_title, txt_artist
     pygame.init()
     pygame.font.init()
     settings = Settings()
@@ -174,25 +169,23 @@ def main():
     t.start()
     t.join()
     
-    # Another thread for pulling song cover
-    t2 = threading.Thread(target=get_song_cover)
-    t2.start()
-    t2.join()
+    # Get cover obj
+    # And set song cover
+    get_cover_obj()
 
     # Render default text images
     artist_img, title_img = get_song_imgs(settings, song_fonts)
     info_height = artist_img.get_height() + title_img.get_height()
 
     if song_cover is not None:
-        cover_img = pygame.transform.scale(song_cover, (info_height,info_height))
+        cover_img = pygame.transform.smoothscale(song_cover, (info_height,info_height))
+    else:
+        cover_img = None
     
     # Connect to backend and create bars
     backend.start_stream(settings)
     settings.b_height = size[1] - info_height
     bars = build_bars(settings, size[0])
-
-    # Get color obj
-    color_obj = get_colors()
 
     # Create custom event for retrieving song info
     GET_SONG = pygame.event.custom_type()
@@ -211,15 +204,17 @@ def main():
     border = True
     displaySettings = False
     last_song_title = txt_title
-    cover_set = song_cover is not None
     color_index = 0
+    t = None
+    t2 = None
+
     while run:
         # Track ticks for smoothing
         tick_count = pygame.time.get_ticks()
         deltaTime = (tick_count - getTicksLastFrame) / 1000.0
         getTicksLastFrame = tick_count
         timer += deltaTime
-        if timer >= color_obj['time_per_beat']:
+        if timer >= cover_obj['time_per_beat']:
             timer = 0
             color_index += 1
 
@@ -227,18 +222,16 @@ def main():
         for event in pygame.event.get():
             if event.type == GET_SONG:
                 # Check for new song info
-                if t.is_alive():
+                if t is not None and t.is_alive():
                     t.join(0)
 
                 last_song_title = txt_title
                 t = threading.Thread(target=get_song_info)
                 t.start()
-                if song_cover is None and not t2.is_alive():
-                    pygame.event.post(COVER_EVENT)
             elif event.type == GET_COVER:
-                if t2.is_alive():
+                if t2 is not None and t2.is_alive():
                     t2.join(0)
-                t2 = threading.Thread(target=get_song_cover)
+                t2 = threading.Thread(target=get_cover_obj)
                 t2.start()
             elif event.type == pygame.QUIT:
                 #close program if X button clicked
@@ -262,23 +255,15 @@ def main():
             # Check to see if the song changed, if so, re-render the text
             artist_img, title_img = get_song_imgs(settings, song_fonts)
             last_song_title = txt_title
-            # Reset Cover Img and check for new cover
-            song_cover = None
-            cover_img = None
-            cover_set = False
-            color_obj = get_colors()
+            # Check for new cover
             pygame.event.post(COVER_EVENT)
-
-        if not cover_set and song_cover is not None and not t2.is_alive():
-            cover_img = pygame.transform.scale(song_cover, (info_height,info_height))
-            cover_set = True
 
         if displaySettings:
             # run after s key has been pressed
             temp_chunk = settings.b_count
             temp_text = (settings.artist_size, settings.title_size, settings.text_color) 
             # run settings draw function and store resulting bools
-            displaySettings, run = settings.draw(screen, clock, size)
+            displaySettings, run = settings.draw(screen, clock, size, cover_obj['colors'])
             # Update Text Sizes and color
             if temp_text != (settings.artist_size, settings.title_size, settings.text_color):
                 font_artist = pygame.font.SysFont(custom_font, settings.artist_size, bold=True)
@@ -288,7 +273,7 @@ def main():
                 info_height = artist_img.get_height() + title_img.get_height()
                 if temp_text[:2] != (settings.artist_size, settings.title_size):
                     settings.b_height = size[1] - info_height
-                    cover_img = pygame.transform.scale(song_cover, (info_height,info_height))
+                    cover_img = pygame.transform.smoothscale(song_cover, (info_height,info_height))
             # Update each bar with new settings
             for bar in bars:
                 bar.update_properties(settings)
@@ -299,25 +284,21 @@ def main():
                 bars = build_bars(settings, size[0])
             settings.save("algorythm_settings")
 
-
-
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
-        if color_obj['colors'] is not None:
-            song_colors = color_obj['colors'][:-1] + color_obj['colors'][::-1]
+        if cover_obj['colors'] is not None:
+            song_colors = cover_obj['colors'][:-1] + cover_obj['colors'][::-1]
             color_index = color_index % (len(song_colors) - 1)
             gradient_colors = [hex_to_rgb(x) for x in song_colors[color_index:color_index+2]]
-            color_mix = timer / color_obj['time_per_beat']
+            color_mix = timer / cover_obj['time_per_beat']
             bar_color = mix_colors(gradient_colors,color_mix)
         else:
             bar_color = settings.b_color
+
         for i, bar in enumerate(bars):
-            bar.update(settings, backend.last_levels[i] * settings.multiplier, deltaTime, artist_img.get_height() + title_img.get_height(), color=bar_color)
+            bar.update(settings, backend.last_levels[i] * settings.multiplier, deltaTime, info_height, color=bar_color)
 
         # drawing logic - should be handled mostly in AudioBar draw
         screen.fill( INVIS )
-
-        if song_cover is not None:
-            screen.blit(cover_img, (0,size[1]-info_height))
 
         # Draw each bar
         for bar in bars:
@@ -332,12 +313,13 @@ def main():
         screen.blit(artist_img, (info_height+10, size[1]-info_height))
         screen.blit(title_img, (info_height+10, size[1]-title_img.get_height()))
 
-        if(color_obj['album_art'] is not None):
-            album_art = pilImageToSurface(color_obj['album_art'])
-            art_x = max(artist_img.get_rect().topright[0], title_img.get_rect().topright[0]) + 10
-            art_y = size[1] - artist_img.get_height() - title_img.get_height() + 10
-            album_art = pygame.transform.scale(album_art,(size[1]-art_y,size[1]-art_y))
-            screen.blit(album_art, (art_x, art_y - 5))
+        # Display cover if it exists
+        if song_cover is not None:
+            if cover_changed or cover_img is None:
+                cover_img = pygame.transform.smoothscale(song_cover, (info_height,info_height))
+                cover_changed = False
+            screen.blit(cover_img, (0,size[1]-info_height))
+
         pygame.display.flip()
         clock.tick(60)
         
