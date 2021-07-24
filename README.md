@@ -9,12 +9,13 @@ _CIS4930 - Performant Programming with Python - Summer 2021_
 
 Outline: https://docs.google.com/document/d/1MjfzGPgUQ3EDTRZ4OSIiPHjVnTdgo9IleFzqqXE-JPo
 
-TestPyPI link: https://test.pypi.org/project/algorythm/0.1/
+TestPyPI link: https://test.pypi.org/project/algorythm/
 
 Project Repository link: https://github.com/cburrows1/AlgoRythm
 
 ## Installation instructions
-- Required packages: pyaudio (see below), numpy, scipy, pygame, pywin32, winrt
+- Install Python 3.8 or Later
+- Manually install pyaudio (see section below)
 - If on Windows enable Stereo mix: (other OS support coming soon)
   - Control panel -> Hardware and Sound -> Sound -> Recording -> Stereo Mix -> \*Right Click\* Enable
 - If Stereo Mix does not appear under recording devices, user must download the device from RealTek. Link to download support video: https://youtu.be/Bd3moKLV5sE
