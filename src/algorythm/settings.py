@@ -9,7 +9,8 @@ class Settings:
     def __init__(self, 
             sensitivity = 0, smoothing = 7, multiplier = 25, 
             b_width = 15, b_height = 150, b_gap = 2, b_count = 64, b_color = (255, 255, 255), 
-            artist_size = 48, title_size = 32, text_color = (255, 255, 255)
+            artist_size = 48, title_size = 32, text_color = (255, 255, 255),
+            layout = 0
         ):
         # All are public
         # Vis Settings
@@ -28,6 +29,10 @@ class Settings:
         self.artist_size = artist_size
         self.title_size = title_size
         self.text_color = text_color
+
+        # Layout setting
+        # Layout is an int that corresponds to type. 0 = Normal, 1 = Inverted, 2 = Dual
+        self.layout = layout
 
     def save(self, filename):
         # pickle and save settings to file

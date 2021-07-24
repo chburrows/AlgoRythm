@@ -1,5 +1,7 @@
-from math import ceil
+from math import ceil,sqrt
 from os.path import isfile
+
+from pygame import color
 
 import algorythm.collect_media_info as media
 
@@ -25,33 +27,66 @@ class AudioBar:
         self.color = settings.b_color
         self.x = self.width * self.index + (self.index * self.gap)
         self.draw_y = self.max_height
-    def update(self, settings, intensity, dt, text_gap):
-        newPos = self.max_height * (1 - intensity)
+    def update(self, settings, intensity, dt, text_gap, color=None):
+        newPos = self.max_height * (1 - intensity * self.index / 20)
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
-        self.draw_y = max(0, min(self.max_height,self.draw_y))
+        self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
-        self.rect=[self.x, (size[1]-self.max_height-text_gap)+self.draw_y,self.width, bar_height]
+        self.rect = [self.x, (size[1] - self.max_height - text_gap) + self.draw_y, self.width, bar_height]
+        if color is not None:
+            self.color = color
     def draw(self, screen):
         #draw the rectangle to the screen using pygame draw rect
         pygame.draw.rect(screen, self.color, self.rect, 0)
 
+class DualBar(AudioBar):
+    def update(self, settings, intensity, dt, text_gap, color=None):
+        newPos = self.max_height * (1 - intensity * self.index / 20)
+        accel = (newPos - self.draw_y) * settings.smoothing
+        self.draw_y += accel * dt
+        self.draw_y = max(0, min(self.max_height, self.draw_y))
+        bar_height = self.max_height-self.draw_y
+        self.rect = [self.x, (size[1]-self.max_height-text_gap) + self.draw_y - 180 + bar_height/2, self.width, bar_height]
+        if color is not None:
+            self.color = color
+
+class InvertedBar(AudioBar):
+    def update(self, settings, intensity, dt, text_gap, color=None):
+        newPos = self.max_height * (1 - intensity * self.index / 20)
+        accel = (newPos - self.draw_y) * settings.smoothing
+        self.draw_y += accel * dt
+        self.draw_y = max(0, min(self.max_height, self.draw_y))
+        bar_height = self.max_height-self.draw_y
+        self.rect = [self.x, 0, self.width, bar_height]
+        if color is not None:
+            self.color = color
+
 def build_bars(settings, width):
     bars = []
+    layout = settings.layout
+
     while len(bars) == 0:
         if len(backend.recent_frames) == 0:
             continue
-        # creation of the AudioBar objects and add them to the list
+        # creation of the *Bar objects and add them to the list
         # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
         settings.b_width = ceil((width - (settings.b_count * settings.b_gap)) / len(backend.last_freqs))
-        for i in range(len(backend.last_freqs)):
-            bars.append(AudioBar(settings, i))
+        if layout == 0:
+            for i in range(len(backend.last_freqs)):
+                bars.append(AudioBar(settings, i))
+        elif layout == 1:
+            for i in range(len(backend.last_freqs)):
+                bars.append(InvertedBar(settings, i))
+        else:
+            for i in range(len(backend.last_freqs)):
+                bars.append(DualBar(settings, i))
     return bars
 
-
 def get_song_info():
-    global txt_title, txt_artist
+    global txt_title, txt_artist, color_obj
     txt_title, txt_artist =  media.collect_title_artist()
+    color_obj = media.generate_colors()
 
 def get_song_imgs(settings, fonts):
     global txt_artist, txt_title
@@ -63,6 +98,15 @@ def get_song_imgs(settings, fonts):
     title_img = font_title.render(txt_title, True, txt_color, INVIS)
     return artist_img, title_img
 
+def mix_colors(colors, mix):
+    return [int(sqrt((1 - mix) * colors[0][i]**2 + mix * colors[1][i]**2)) for i in range(3)]
+def hextoRGB(hex_code):
+    h = hex_code.lstrip('#')
+    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+def pilImageToSurface(pilImage):
+    return pygame.image.fromstring(
+        pilImage.tobytes(), pilImage.size, pilImage.mode).convert()
+
 
 # Globals
 INVIS = (1,0,1)
@@ -71,6 +115,7 @@ size = (850, 450)
 
 
 txt_title, txt_artist = ("Title", "Artist")
+color_obj = {'time_per_beat':1, 'colors':['#ffffff']*4, 'album_art':None}
 
 def main():
     pygame.init()
@@ -100,7 +145,8 @@ def main():
 
     hint_imgs = [font_hint.render('Key Hints:', True, WHITE, INVIS),
         font_hint2.render('Press S for Settings', True, WHITE, INVIS),
-        font_hint2.render('Press M to toggle window border', True, WHITE, INVIS)]
+        font_hint2.render('Press M to toggle window border', True, WHITE, INVIS),
+        font_hint2.render('Press L to toggle layout', True, WHITE, INVIS)]
 
     # Song Desciption Text
     # Allow for custom fonts in future
@@ -110,7 +156,6 @@ def main():
     font_artist = pygame.font.SysFont(custom_font, artist_size, bold=True)
     font_title = pygame.font.SysFont(custom_font, title_size, bold=True)
     song_fonts = font_artist, font_title
-
 
     # Create thread for getting song info
     t = threading.Thread(target=get_song_info)
@@ -131,19 +176,24 @@ def main():
     pygame.time.set_timer(SONG_EVENT, 3000) # Time in ms in-between song gathering
 
     # Track ticks
-    t = pygame.time.get_ticks()
-    getTicksLastFrame = t
-
+    tick_count = pygame.time.get_ticks()
+    getTicksLastFrame = tick_count
+    timer = 0
     # Main PyGame render loop
     run = True
     border = True
     displaySettings = False
     last_song_title = txt_title
+    color_index = 0
     while run:
         # Track ticks for smoothing
-        t = pygame.time.get_ticks()
-        deltaTime = (t - getTicksLastFrame) / 1000.0
-        getTicksLastFrame = t
+        tick_count = pygame.time.get_ticks()
+        deltaTime = (tick_count - getTicksLastFrame) / 1000.0
+        getTicksLastFrame = tick_count
+        timer += deltaTime
+        if timer >= color_obj['time_per_beat']:
+            timer = 0
+            color_index += 1
 
         for event in pygame.event.get():
             if event.type == GET_SONG:
@@ -165,6 +215,9 @@ def main():
                         screen = pygame.display.set_mode(size)
                     else:
                         screen = pygame.display.set_mode(size, pygame.NOFRAME)
+                elif event.key == pygame.K_l:
+                    settings.layout = (settings.layout + 1) % 3
+                    bars = build_bars(settings, size[0])
 
         if last_song_title != txt_title:
             # Check to see if the song changed, if so, re-render the text
@@ -193,9 +246,16 @@ def main():
                 bars = build_bars(settings, size[0])
             settings.save("algorythm_settings")
 
+
+
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
+        song_colors = color_obj['colors'][:-1] + color_obj['colors'][::-1]
+        color_index = color_index % (len(song_colors) - 1)
+        gradient_colors = [hextoRGB(x) for x in song_colors[color_index:color_index+2]]
+        color_mix = timer / color_obj['time_per_beat']
+        bar_color = mix_colors(gradient_colors,color_mix)
         for i, bar in enumerate(bars):
-            bar.update(settings, backend.last_levels[i] * settings.multiplier, deltaTime, artist_img.get_height() + title_img.get_height())
+            bar.update(settings, backend.last_levels[i] * settings.multiplier, deltaTime, artist_img.get_height() + title_img.get_height(), color=bar_color)
 
         # drawing logic - should be handled mostly in AudioBar draw
         screen.fill( INVIS )
@@ -212,7 +272,12 @@ def main():
         # Print song text
         screen.blit(artist_img, (0, size[1]-(artist_img.get_height()+title_img.get_height())))
         screen.blit(title_img, (0, size[1]-title_img.get_height()))
-
+        if(color_obj['album_art'] is not None):
+            album_art = pilImageToSurface(color_obj['album_art'])
+            art_x = max(artist_img.get_rect().topright[0], title_img.get_rect().topright[0]) + 10
+            art_y = size[1] - artist_img.get_height() - title_img.get_height() + 10
+            album_art = pygame.transform.scale(album_art,(size[1]-art_y,size[1]-art_y))
+            screen.blit(album_art, (art_x, art_y - 5))
         pygame.display.flip()
         clock.tick(60)
         
