@@ -10,7 +10,7 @@ class Settings:
             sensitivity = 0, smoothing = 7, multiplier = 25, 
             b_width = 15, b_height = 150, b_gap = 2, b_count = 64, b_color = (255, 255, 255), 
             artist_size = 48, title_size = 32, text_color = (255, 255, 255),
-            layout = 0
+            layout = 0, size = (1200, 600)
         ):
         # All are public
         # Vis Settings
@@ -33,6 +33,7 @@ class Settings:
         # Layout setting
         # Layout is an int that corresponds to type. 0 = Normal, 1 = Inverted, 2 = Dual
         self.layout = layout
+        self.size = size
 
     def save(self, filename):
         # pickle and save settings to file
@@ -163,7 +164,7 @@ class Settings:
                 elif text_inputs[5].update(events):
                     self.b_gap = int(text_inputs[5].get_text())
                 elif text_inputs[6].update(events):
-                    self.b_count = int(text_inputs[6].get_text())
+                    self.b_count = min(int(text_inputs[6].get_text()), width//(self.b_gap+1))
                 elif text_inputs[7].update(events):
                     self.b_color = hex_to_rgb(text_inputs[7].get_text())
                 elif song_inputs[0].update(events):

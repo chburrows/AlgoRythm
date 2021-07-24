@@ -2,6 +2,7 @@ from math import ceil,sqrt
 from os.path import isfile
 
 from pygame import color
+from pygame.constants import RESIZABLE
 
 import algorythm.collect_media_info as media
 
@@ -115,7 +116,6 @@ def mix_colors(colors, mix):
 # Globals
 INVIS = (1,0,1)
 WHITE = (255, 255, 255)
-size = (850, 450)
 
 txt_title, txt_artist = ("Title", "Artist")
 
@@ -124,7 +124,7 @@ song_cover = None
 cover_changed = False
 
 def main():
-    global song_cover, cover_obj, cover_changed, txt_title, txt_artist
+    global song_cover, cover_obj, cover_changed, txt_title, txt_artist, size
     pygame.init()
     pygame.font.init()
     settings = Settings()
@@ -134,8 +134,9 @@ def main():
     #scale factor = maybe a non constant scale factor could be better
     # it looks like the low end consistently has higher intensity than the high end
     # Scale has been replaced by settings.multiplier
+    size = settings.size
 
-    screen = pygame.display.set_mode(size)
+    screen = pygame.display.set_mode(size, RESIZABLE)
     pygame.display.set_caption("AlgoRythm")
     clock = pygame.time.Clock()
 
@@ -250,7 +251,13 @@ def main():
                 elif event.key == pygame.K_l:
                     settings.layout = (settings.layout + 1) % 3
                     bars = build_bars(settings, size[0])
-            
+            elif event.type == pygame.VIDEORESIZE:
+                size = settings.size = event.dict['size']
+                settings.b_height = size[1] - info_height
+                bars = build_bars(settings, size[0])
+                settings.save('algorythm_settings')
+                pygame.display.update()
+
         if last_song_title != txt_title:
             # Check to see if the song changed, if so, re-render the text
             artist_img, title_img = get_song_imgs(settings, song_fonts)
@@ -260,7 +267,7 @@ def main():
 
         if displaySettings:
             # run after s key has been pressed
-            temp_chunk = settings.b_count
+            temp_chunk = (settings.b_count, settings.b_gap)
             temp_text = (settings.artist_size, settings.title_size, settings.text_color) 
             # run settings draw function and store resulting bools
             displaySettings, run = settings.draw(screen, clock, size, cover_obj['colors'])
@@ -278,7 +285,7 @@ def main():
             for bar in bars:
                 bar.update_properties(settings)
 
-            if temp_chunk != settings.b_count:
+            if temp_chunk != (settings.b_count, settings.b_gap):
                 # If chunk was changed, restart stream and rebuld bars
                 backend.restart_stream(settings)
                 bars = build_bars(settings, size[0])
@@ -287,7 +294,7 @@ def main():
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
         if cover_obj['colors'] is not None:
             song_colors = cover_obj['colors'][:-1] + cover_obj['colors'][::-1]
-            color_index = color_index % (len(song_colors) - 1)
+            color_index = color_index % (len(song_colors) - 1) # TODO: Fix modulo by zero crash when only one in song_colors
             gradient_colors = [hex_to_rgb(x) for x in song_colors[color_index:color_index+2]]
             color_mix = timer / cover_obj['time_per_beat']
             bar_color = mix_colors(gradient_colors,color_mix)
