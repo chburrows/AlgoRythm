@@ -5,11 +5,9 @@ Borrowed from https://github.com/Nearoo/pygame-text-input under the MIT license.
 """
 
 import os.path
-from threading import active_count
 
 import pygame
 import pygame.locals as pl
-from win32con import HOLLOW_BRUSH
 
 pygame.font.init()
 
@@ -82,12 +80,12 @@ class TextInput:
 
     def update(self, events):
         for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pl.MOUSEBUTTONDOWN:
                 if self.check_collide(event.pos):
                     self.active = True
                 else:
                     self.active = False
-            if event.type == pygame.KEYDOWN and self.active:
+            if event.type == pl.KEYDOWN and self.active:
                 self.cursor_visible = True  # So the user sees where he writes
 
                 # If none exist, create counter for that key:
@@ -227,20 +225,33 @@ class Button:
         self.pos = pos
         self.rect = pygame.Rect(pos, size)
 
-        font = pygame.font.SysFont(None, self.text_size)
-        self.text_img = font.render(self.text, True, text_color)
+        self.font = pygame.font.SysFont(None, self.text_size)
+        self.text_img = self.font.render(self.text, True, self.text_color)
+
+        self.temp_set = False
+        self.temp_count_ms = 0
+        self.clock = pygame.time.Clock()
 
     def update(self, events):
-        for ev in events:
-            m_pos = pygame.mouse.get_pos()
-            if self.check_collide(m_pos):
-                if ev.type == pygame.MOUSEBUTTONDOWN:
-                    self.active_color = self.clicked_color
-                    return True
+        if self.temp_set and self.temp_count_ms <= 0:
+            self.active_color = self.inactive_color
+            self.text_img = self.font.render(self.text, True, self.text_color)
+            self.temp_set = False
+        elif self.temp_count_ms > 0:
+            self.temp_count_ms -= self.clock.get_time()
+        elif not self.temp_set:
+            for ev in events:
+                m_pos = pygame.mouse.get_pos()
+                if self.check_collide(m_pos):
+                    if ev.type == pl.MOUSEBUTTONDOWN:
+                        self.active_color = self.clicked_color
+                        return True
+                    else:
+                        self.active_color = self.hover_color
                 else:
-                    self.active_color = self.hover_color
-            else:
-                self.active_color = self.inactive_color
+                    self.active_color = self.inactive_color
+
+        self.clock.tick()
         return False
         
     def draw(self, screen):
@@ -251,8 +262,13 @@ class Button:
     def get_rect(self):
         return self.rect
 
+    def temp_change(self, color, text, time):
+        self.active_color = color
+        self.temp_count_ms = time
+        self.temp_set = True
+        self.text_img = self.font.render(text, True, self.text_color)
+
     def check_collide(self, pos_):
-        # Added by Laurence to check that a textbox is being clicked on
         bounds = (self.size[0] + self.pos[0], self.size[1] + self.pos[1])
 
         if pos_[0] >= self.pos[0] and pos_[0] <= bounds[0] and pos_[1] >= self.pos[1] and pos_[1] <= bounds[1]:
@@ -262,7 +278,6 @@ class Button:
 if __name__ == "__main__":
     pygame.init()
 
-    # Create TextInput-object
     button = Button("Hello World", (120, 60), (100,50), (50,50,50), (100,100,100), (150,150,150), text_size=24, text_color=(255,255,255))
     screen = pygame.display.set_mode((1000, 200))
     clock = pygame.time.Clock()
@@ -272,7 +287,7 @@ if __name__ == "__main__":
 
         events = pygame.event.get()
         if button.update(events):
-            screen.fill((200, 0, 0))
+            button.temp_change((255,0,0), "ERROR", 3000)
         for event in events:
             if event.type == pygame.QUIT:
                 exit()
