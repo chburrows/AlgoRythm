@@ -162,7 +162,7 @@ def main():
     custom_font = None
     artist_size, title_size = (settings.artist_size, settings.title_size)
     font_artist = pygame.font.SysFont(custom_font, artist_size, bold=True)
-    font_title = pygame.font.SysFont(custom_font, title_size, bold=True)
+    font_title = pygame.font.SysFont(custom_font, title_size, bold=True)    
     song_fonts = font_artist, font_title
 
     # Create thread for getting song info
@@ -245,7 +245,7 @@ def main():
                     # Press M to toggle window border
                     border = not border
                     if border:
-                        screen = pygame.display.set_mode(size)
+                        screen = pygame.display.set_mode(size, RESIZABLE)
                     else:
                         screen = pygame.display.set_mode(size, pygame.NOFRAME)
                 elif event.key == pygame.K_l:
@@ -256,6 +256,7 @@ def main():
                 settings.b_height = size[1] - info_height
                 bars = build_bars(settings, size[0])
                 settings.save('algorythm_settings')
+                #screen = pygame.display.set_mode(size, RESIZABLE)
                 pygame.display.update()
 
         if last_song_title != txt_title:
