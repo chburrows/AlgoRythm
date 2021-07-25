@@ -256,8 +256,6 @@ def main():
                 settings.b_height = size[1] - info_height
                 bars = build_bars(settings, size[0])
                 settings.save('algorythm_settings')
-                #screen = pygame.display.set_mode(size, RESIZABLE)
-                pygame.display.update()
 
         if last_song_title != txt_title:
             # Check to see if the song changed, if so, re-render the text
@@ -269,7 +267,7 @@ def main():
         if displaySettings:
             # run after s key has been pressed
             temp_chunk = (settings.b_count, settings.b_gap)
-            temp_text = (settings.artist_size, settings.title_size, settings.text_color) 
+            temp_text = (settings.artist_size, settings.title_size, settings.text_color)
             # run settings draw function and store resulting bools
             displaySettings, run = settings.draw(screen, clock, size, cover_obj['colors'])
             # Update Text Sizes and color
@@ -285,12 +283,16 @@ def main():
             # Update each bar with new settings
             for bar in bars:
                 bar.update_properties(settings)
-
             if temp_chunk != (settings.b_count, settings.b_gap):
                 # If chunk was changed, restart stream and rebuld bars
                 backend.restart_stream(settings)
                 bars = build_bars(settings, size[0])
+            if size != settings.size:
+                size = settings.size
+                settings.b_height = size[1] - info_height
+                bars = build_bars(settings, size[0])
             settings.save("algorythm_settings")
+
 
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
         if cover_obj['colors'] is not None:

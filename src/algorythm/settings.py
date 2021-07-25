@@ -1,6 +1,6 @@
 import pygame
 from algorythm.collect_media_info import generate_colors
-import algorythm.pygame_textinput as pytxt
+from algorythm.pygame_objects import TextInput, Button
 import pickle
 
 # Textbox reference https://stackoverflow.com/questions/46390231/how-can-i-create-a-text-input-box-with-pygame
@@ -81,18 +81,18 @@ class Settings:
 
 
         # Text Input
-        text_inputs = [pytxt.TextInput(str(self.sensitivity), max_string_length=4),
-            pytxt.TextInput(str(self.smoothing), max_string_length=4),
-            pytxt.TextInput(str(self.multiplier), max_string_length=4),
-            pytxt.TextInput(str(self.b_width), max_string_length=4),
-            pytxt.TextInput(str(self.b_height), max_string_length=4),
-            pytxt.TextInput(str(self.b_gap), max_string_length=2),
-            pytxt.TextInput(str(self.b_count), max_string_length=4),
-            pytxt.TextInput(rgb_to_hex(self.b_color), max_string_length=6)] # Convert rgb to hex
+        text_inputs = [TextInput(str(self.sensitivity), max_string_length=4),
+            TextInput(str(self.smoothing), max_string_length=4),
+            TextInput(str(self.multiplier), max_string_length=4),
+            TextInput(str(self.b_width), max_string_length=4),
+            TextInput(str(self.b_height), max_string_length=4),
+            TextInput(str(self.b_gap), max_string_length=2),
+            TextInput(str(self.b_count), max_string_length=4),
+            TextInput(rgb_to_hex(self.b_color), max_string_length=6)] # Convert rgb to hex
 
-        song_inputs = [pytxt.TextInput(str(self.artist_size), max_string_length=3),
-            pytxt.TextInput(str(self.title_size), max_string_length=3),
-            pytxt.TextInput(rgb_to_hex(self.text_color), max_string_length=6)]
+        song_inputs = [TextInput(str(self.artist_size), max_string_length=3),
+            TextInput(str(self.title_size), max_string_length=3),
+            TextInput(rgb_to_hex(self.text_color), max_string_length=6)]
 
         # Setting Titles
         # Create font with a set size
@@ -125,9 +125,11 @@ class Settings:
             font_options.render('Text Color:', True, WHITE, BACK_COLOR)]
 
         # Starting x_pos for text options
-        x_pos = width // 3
+
+        save_bttn = Button("Save", (150, 60), (width-180, height-90), (0,230,38), (0,179,30), (0,255,42), text_size=32)
             
         while True:
+            x_pos = width // 3
             events = pygame.event.get()
             for event in events:
                 if event.type == pygame.QUIT:
@@ -140,7 +142,6 @@ class Settings:
                     pos = pygame.mouse.get_pos()
                     # Check if obj is clicked on using something such as:
                     # if RectObj.collidepoint(pos)
-                    # TODO: Check if color palette rectangle was pressed, and assign its color to settings b_color and/or text_color
                     for i, s_rect in enumerate(sample_colors):
                         if s_rect.collidepoint(pos):
                             self.b_color = sample_rgb_colors[i]
@@ -148,34 +149,32 @@ class Settings:
                         for index, c_rect in enumerate(color_palette):
                             if c_rect.collidepoint(pos):
                                 self.b_color = colors[index]
+                elif event.type == pygame.VIDEORESIZE:
+                    width,height = size = self.size = screen.get_size()
 
             # If collecting input from a text box, check if there was an update to value, then assign it to settings attribute
-            try:
-                if text_inputs[0].update(events):
+            for ti in text_inputs:
+                ti.update(events)
+            for si in song_inputs:
+                si.update(events)
+
+            # If save button was pressed, update setting values 
+            if save_bttn.update(events):
+                try:
                     self.sensitivity = int(text_inputs[0].get_text())
-                elif text_inputs[1].update(events):
                     self.smoothing = int(text_inputs[1].get_text())
-                elif text_inputs[2].update(events):
                     self.multiplier = int(text_inputs[2].get_text())
-                elif text_inputs[3].update(events):
                     self.b_width = int(text_inputs[3].get_text())
-                elif text_inputs[4].update(events):
                     self.b_height = int(text_inputs[4].get_text())
-                elif text_inputs[5].update(events):
                     self.b_gap = int(text_inputs[5].get_text())
-                elif text_inputs[6].update(events):
                     self.b_count = min(int(text_inputs[6].get_text()), width//(self.b_gap+1))
-                elif text_inputs[7].update(events):
                     self.b_color = hex_to_rgb(text_inputs[7].get_text())
-                elif song_inputs[0].update(events):
                     self.artist_size = int(song_inputs[0].get_text())
-                elif song_inputs[1].update(events):
                     self.title_size = int(song_inputs[1].get_text())
-                elif song_inputs[2].update(events):
                     self.text_color = hex_to_rgb(song_inputs[2].get_text())
-            except ValueError:
-                # Validate input
-                print("Error: Invalid input, NaN.")
+                except ValueError:
+                    # Validate input, show err in button
+                    save_bttn.temp_change((200, 10, 0), "Invalid Input", 3000)
 
             screen.fill( BACK_COLOR )
 
@@ -184,7 +183,7 @@ class Settings:
             screen.blit(title_img, (20, 20))
             screen.blit(vert_prop_img, (x_pos, 20))
             screen.blit(hint_img, (x_pos, 45))
-            screen.blit(music_img, (width*2//3, 20))
+            screen.blit(music_img, (x_pos*2, 20))
 
             # Display visualizer options
             y_pos = 60
@@ -197,11 +196,13 @@ class Settings:
 
             # Display sample color rectangles
             for i in range(len(sample_colors)):
+                sample_colors[i].left = x_pos + 10 + 20*i
                 pygame.draw.rect(screen, sample_rgb_colors[i], sample_colors[i])
 
             # Display color palette for gradient
             if colors is not None:
                 for ind, col in enumerate(colors):
+                    color_palette[ind].left = x_pos + 10 + 20*ind
                     pygame.draw.rect(screen, col, color_palette[ind])
 
             # Display Music Options
@@ -214,6 +215,7 @@ class Settings:
 
 
             # NOTE: For anything else that needs to be displayed, create an object with pygame (such as Rect), and draw it here with pygame.draw
+            save_bttn.draw(screen)
 
             pygame.display.flip()
             clock.tick(30)
