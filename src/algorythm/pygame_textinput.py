@@ -5,9 +5,11 @@ Borrowed from https://github.com/Nearoo/pygame-text-input under the MIT license.
 """
 
 import os.path
+from threading import active_count
 
 import pygame
 import pygame.locals as pl
+from win32con import HOLLOW_BRUSH
 
 pygame.font.init()
 
@@ -207,27 +209,76 @@ class TextInput:
             return True
         return False
 
+
+class Button:
+    def __init__(self, text, size, pos,
+    inactive_color, hover_color, clicked_color, border_color=(0,0,0),
+    text_size=24, text_color=(0,0,0)):
+        self.text = text
+        self.size = size
+        self.inactive_color = inactive_color
+        self.hover_color = hover_color
+        self.clicked_color = clicked_color
+        self.border_color = border_color
+        self.text_size = text_size
+        self.text_color = text_color
+
+        self.active_color = inactive_color
+        self.pos = pos
+        self.rect = pygame.Rect(pos, size)
+
+        font = pygame.font.SysFont(None, self.text_size)
+        self.text_img = font.render(self.text, True, text_color)
+
+    def update(self, events):
+        for ev in events:
+            m_pos = pygame.mouse.get_pos()
+            if self.check_collide(m_pos):
+                if ev.type == pygame.MOUSEBUTTONDOWN:
+                    self.active_color = self.clicked_color
+                    return True
+                else:
+                    self.active_color = self.hover_color
+            else:
+                self.active_color = self.inactive_color
+        return False
+        
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.active_color, self.rect)
+        t_size = self.text_img.get_size()
+        screen.blit(self.text_img, (self.pos[0] + self.size[0]/2 - t_size[0]/2, self.pos[1] + self.size[1]/2 - t_size[1]/2))
+
+    def get_rect(self):
+        return self.rect
+
+    def check_collide(self, pos_):
+        # Added by Laurence to check that a textbox is being clicked on
+        bounds = (self.size[0] + self.pos[0], self.size[1] + self.pos[1])
+
+        if pos_[0] >= self.pos[0] and pos_[0] <= bounds[0] and pos_[1] >= self.pos[1] and pos_[1] <= bounds[1]:
+            return True
+        return False
+
 if __name__ == "__main__":
     pygame.init()
 
     # Create TextInput-object
-    textinput = TextInput()
-
+    button = Button("Hello World", (120, 60), (100,50), (50,50,50), (100,100,100), (150,150,150), text_size=24, text_color=(255,255,255))
     screen = pygame.display.set_mode((1000, 200))
     clock = pygame.time.Clock()
 
+    screen.fill((225, 225, 225))
     while True:
-        screen.fill((225, 225, 225))
 
         events = pygame.event.get()
+        if button.update(events):
+            screen.fill((200, 0, 0))
         for event in events:
             if event.type == pygame.QUIT:
                 exit()
 
         # Feed it with events every frame
-        textinput.update(events)
-        # Blit its surface onto the screen
-        b = screen.blit(textinput.get_surface(), (10, 10))
-
+        
+        button.draw(screen)
         pygame.display.update()
         clock.tick(30)
