@@ -1,4 +1,4 @@
-from math import ceil,sqrt
+from math import ceil, sqrt, cos, sin
 from os.path import isfile
 
 from pygame import color
@@ -63,6 +63,24 @@ class InvertedBar(AudioBar):
         if color is not None:
             self.color = color
 
+class RadialBar(AudioBar):
+    def update(self, settings, intensity, dt, text_gap, color=None):
+        newPos = self.max_height * (1 - intensity * self.index / 20)
+        accel = (newPos - self.draw_y) * settings.smoothing
+        self.draw_y += accel * dt
+        self.draw_y = max(0, min(self.max_height, self.draw_y))
+        bar_height = self.max_height-self.draw_y
+        self.rect = [self.x, 0, self.width, bar_height]
+        theta = (360 / (settings.b_count * self.width)) * self.index
+        self.x0 = 30 * cos(theta)
+        self.y0 = 30 * sin(theta)
+        self.x1 = cos(theta) * max(30, 3 * bar_height)
+        self.y1 = sin(theta) * max(30, 3 * bar_height)
+        if color is not None:
+            self.color = color
+    def draw(self, screen):
+        pygame.draw.line(screen, self.color, (400 + self.x0, 200 + self.y0), (400 + self.x1, 200 + self.y1), ceil(self.width / 2))
+
 def build_bars(settings, width):
     bars = []
     layout = settings.layout
@@ -73,15 +91,19 @@ def build_bars(settings, width):
         # creation of the *Bar objects and add them to the list
         # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
         settings.b_width = ceil((width - (settings.b_count * settings.b_gap)) / len(backend.last_freqs))
-        if layout == 0:
-            for i in range(len(backend.last_freqs)):
-                bars.append(AudioBar(settings, i))
-        elif layout == 1:
+        #TODO - replace if/else ladder with layout dict
+        if layout == 1:
             for i in range(len(backend.last_freqs)):
                 bars.append(InvertedBar(settings, i))
-        else:
+        elif layout == 2:
             for i in range(len(backend.last_freqs)):
                 bars.append(DualBar(settings, i))
+        elif layout == 3:
+            for i in range(len(backend.last_freqs)):
+                bars.append(RadialBar(settings, i))
+        else:
+            for i in range(len(backend.last_freqs)):
+                bars.append(AudioBar(settings, i))
     return bars
 
 def get_song_info():
@@ -248,7 +270,7 @@ def main():
                     else:
                         screen = pygame.display.set_mode(size, pygame.NOFRAME)
                 elif event.key == pygame.K_l:
-                    settings.layout = (settings.layout + 1) % 3
+                    settings.layout = (settings.layout + 1) % 4
                     bars = build_bars(settings, size[0])
             
         if last_song_title != txt_title:
