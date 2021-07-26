@@ -181,6 +181,8 @@ def main():
     run = True
     border = True
     displaySettings = False
+    # display menu on start up
+    displayMainMenu = True
     last_song_title = txt_title
     color_index = 0
     t = None
@@ -275,6 +277,10 @@ def main():
                 bars = build_bars(settings, size[0])
             settings.save("algorythm_settings")
 
+        if displayMainMenu:
+            # draw menu
+            menu.draw(screen, clock, size)
+             
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
         if settings.dyn_color and cover_obj['colors'] is not None and len(cover_obj['colors']) > 1:
             song_colors = cover_obj['colors'][:-1] + cover_obj['colors'][::-1]
