@@ -30,8 +30,8 @@ class AudioBar:
         self.x = self.width * self.index + (self.index * self.gap)
         self.draw_y = self.max_height
     def update(self, settings, intensity, dt, text_gap, color=None):
-        newPos = self.max_height * (1 - intensity * (self.index+1) / 20)
-        accel = (newPos - self.draw_y) * settings.smoothing
+        newPos = self.max_height * (1 - intensity * (self.index*settings.normalization/100+1) / 10) # Might need some tweaking
+        accel = (newPos - self.draw_y) * 100/settings.smoothing # Def needs some tweaking
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
@@ -310,7 +310,7 @@ def main():
         # drawing logic - should be handled mostly in AudioBar draw
         screen.fill( INVIS )
 
-        # Draw each bar
+        # Draw each bars
         for bar in bars:
             bar.draw(screen)
 
