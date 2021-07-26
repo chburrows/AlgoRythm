@@ -54,6 +54,7 @@ class TextInput:
             font_family = pygame.font.match_font(font_family)
 
         self.font_object = pygame.font.Font(font_family, font_size)
+        self.font_object.underline = True
 
         # Text-surface will be created during the first update call:
         self.surface = pygame.Surface((1, 1))
