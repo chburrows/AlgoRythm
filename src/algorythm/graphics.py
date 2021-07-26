@@ -137,6 +137,8 @@ def main():
 
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption("AlgoRythm")
+    logo_img = pygame.image.load('logo.png')
+    pygame.display.set_icon(logo_img)
     clock = pygame.time.Clock()
 
     # Win32 Layered window (From https://stackoverflow.com/questions/550001/fully-transparent-windows-in-pygame)
