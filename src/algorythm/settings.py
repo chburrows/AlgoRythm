@@ -7,14 +7,14 @@ import pickle
 
 class Settings:
     def __init__(self, 
-            sensitivity = 0, smoothing = 7, multiplier = 25, 
+            normalization = 100, smoothing = 100, multiplier = 25, 
             b_width = 15, b_height = 150, b_gap = 2, b_count = 64, b_color = (255, 255, 255), 
             artist_size = 48, title_size = 32, text_color = (255, 255, 255),
             layout = 0, size = (1200, 600)
         ):
         # All are public
         # Vis Settings
-        self.sensitivity = sensitivity
+        self.normalization = normalization
         self.smoothing = smoothing
         self.multiplier = multiplier
         
@@ -81,7 +81,7 @@ class Settings:
 
 
         # Text Input
-        text_inputs = [TextInput(str(self.sensitivity), max_string_length=4),
+        text_inputs = [TextInput(str(self.normalization), max_string_length=3),
             TextInput(str(self.smoothing), max_string_length=4),
             TextInput(str(self.multiplier), max_string_length=4),
             TextInput(str(self.b_width), max_string_length=4),
@@ -102,7 +102,7 @@ class Settings:
         vert_prop_img = font.render('Visualizer Properties', True, WHITE, BACK_COLOR)
         music_img = font.render('Music Properties', True, WHITE, BACK_COLOR)
         font_hint = pygame.font.SysFont(None, 24, italic=True)
-        hint_img = font_hint.render("Press enter to confirm value.", True, GRAY, BACK_COLOR)
+        hint_img = font_hint.render("Press save to confirm values.", True, GRAY, BACK_COLOR)
         
         # Option text
         # NOTE: To add a new font size for text follow the format below, changing the number to the desired font size
@@ -110,7 +110,7 @@ class Settings:
         
         # NOTE: Then render the image using above font with ("Text", True, (R,G,B), BACK_COLOR)
         # If displaying multiple text elements in a row, it is easier to store them in an array
-        opt_imgs = [font_options.render('Sensitivity (db):', True, WHITE, BACK_COLOR),
+        opt_imgs = [font_options.render('Normalization:', True, WHITE, BACK_COLOR),
             font_options.render('Smoothing Level:', True, WHITE, BACK_COLOR),
             font_options.render('Multiplier:', True, WHITE, BACK_COLOR),
             font_options.render('Bar Width:', True, WHITE, BACK_COLOR),
@@ -151,6 +151,8 @@ class Settings:
                                 self.b_color = colors[index]
                 elif event.type == pygame.VIDEORESIZE:
                     width,height = size = self.size = screen.get_size()
+                    save_bttn.pos = (width-180, height-90)
+                    save_bttn.rect.topleft = save_bttn.pos
 
             # If collecting input from a text box, check if there was an update to value, then assign it to settings attribute
             for ti in text_inputs:
@@ -161,9 +163,18 @@ class Settings:
             # If save button was pressed, update setting values 
             if save_bttn.update(events):
                 try:
-                    self.sensitivity = int(text_inputs[0].get_text())
-                    self.smoothing = int(text_inputs[1].get_text())
-                    self.multiplier = int(text_inputs[2].get_text())
+                    norm = int(text_inputs[0].get_text())
+                    self.normalization = norm if norm >= 0 else 100 if norm > 100 else 0
+                    text_inputs[0].input_string = str(self.normalization)
+
+                    smooth = int(text_inputs[1].get_text())
+                    self.smoothing = smooth if smooth > 0 else 100 if smooth > 100 else 1
+                    text_inputs[1].input_string = str(self.smoothing)
+
+                    mult = int(text_inputs[2].get_text())
+                    self.multiplier = mult if mult > 0 else 1
+                    text_inputs[2].input_string = str(self.multiplier)
+
                     self.b_width = int(text_inputs[3].get_text())
                     self.b_height = int(text_inputs[4].get_text())
                     self.b_gap = int(text_inputs[5].get_text())
@@ -191,8 +202,8 @@ class Settings:
                 y_pos += 30 + (30 if index == 3 else 0)
                 screen.blit(img, (x_pos, y_pos))
                 if index < len(text_inputs):
-                    screen.blit(text_inputs[index].get_surface(), (x_pos + 180, y_pos))
-                    text_inputs[index].set_pos((x_pos + 180, y_pos))
+                    screen.blit(text_inputs[index].get_surface(), (x_pos*2-x_pos/4, y_pos))
+                    text_inputs[index].set_pos((x_pos*2-x_pos/4, y_pos))
 
             # Display sample color rectangles
             for i in range(len(sample_colors)):
@@ -210,8 +221,8 @@ class Settings:
             for ind, text in enumerate(song_opt_imgs):
                 y_pos += 30
                 screen.blit(text, (x_pos*2, y_pos))
-                screen.blit(song_inputs[ind].get_surface(), (x_pos*2+180, y_pos))
-                song_inputs[ind].set_pos((x_pos*2+180, y_pos))
+                screen.blit(song_inputs[ind].get_surface(), (x_pos*3-x_pos/4, y_pos))
+                song_inputs[ind].set_pos((x_pos*3-x_pos/4, y_pos))
 
 
             # NOTE: For anything else that needs to be displayed, create an object with pygame (such as Rect), and draw it here with pygame.draw
