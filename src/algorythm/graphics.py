@@ -34,7 +34,9 @@ class AudioBar:
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
-        self.rect = [self.x, self.draw_y, self.width, bar_height]
+        #self.rect = [self.x, self.draw_y, self.width, bar_height]
+        #TODO - revert?
+        self.rect = [self.x, (size[1] - self.max_height - text_gap) + self.draw_y, self.width, bar_height]
         if color is not None:
             self.color = color
     def draw(self, screen):
@@ -48,7 +50,9 @@ class DualBar(AudioBar):
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
-        self.rect = [self.x, self.draw_y + bar_height/2 - self.max_height/2, self.width, bar_height]
+        #self.rect = [self.x, self.draw_y + bar_height/2 - self.max_height/2, self.width, bar_height]
+        #TODO - revert?
+        self.rect = [self.x, (size[1] - self.max_height - text_gap) + self.draw_y - (2 * size[1] / 5) + (bar_height / 2), self.width, bar_height]
         if color is not None:
             self.color = color
 
