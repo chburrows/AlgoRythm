@@ -313,7 +313,7 @@ def main():
             gradient_colors = [hex_to_rgb(x) for x in song_colors[color_index:color_index+2]]
             color_mix = timer / cover_obj['time_per_beat']
             bar_color = mix_colors(gradient_colors,color_mix)
-        elif len(cover_obj['colors']) == 1:
+        elif cover_obj['colors'] is not None and len(cover_obj['colors']) == 1:
             bar_color = hex_to_rgb(cover_obj['colors'][0])
         else:
             bar_color = settings.b_color
