@@ -1,4 +1,4 @@
-from math import ceil, sqrt, cos, sin
+from math import ceil, sqrt, cos, sin, pi
 from os.path import isfile
 
 from pygame import color
@@ -34,8 +34,6 @@ class AudioBar:
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
-        #self.rect = [self.x, self.draw_y, self.width, bar_height]
-        #TODO - revert?
         self.rect = [self.x, (size[1] - self.max_height - text_gap) + self.draw_y, self.width, bar_height]
         if color is not None:
             self.color = color
@@ -49,9 +47,7 @@ class DualBar(AudioBar):
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
-        bar_height = self.max_height-self.draw_y
-        #self.rect = [self.x, self.draw_y + bar_height/2 - self.max_height/2, self.width, bar_height]
-        #TODO - revert?
+        bar_height = self.max_height - self.draw_y
         self.rect = [self.x, (size[1] - self.max_height - text_gap) + self.draw_y - (2 * size[1] / 5) + (bar_height / 2), self.width, bar_height]
         if color is not None:
             self.color = color
@@ -62,7 +58,7 @@ class InvertedBar(AudioBar):
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
-        bar_height = self.max_height-self.draw_y
+        bar_height = self.max_height - self.draw_y
         self.rect = [self.x, 0, self.width, bar_height]
         if color is not None:
             self.color = color
@@ -73,17 +69,22 @@ class RadialBar(AudioBar):
         accel = (newPos - self.draw_y) * settings.smoothing
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
-        bar_height = self.max_height-self.draw_y
-        self.rect = [self.x, 0, self.width, bar_height]
-        theta = (360 / (settings.b_count * self.width)) * self.index
-        self.x0 = 30 * cos(theta)
-        self.y0 = 30 * sin(theta)
-        self.x1 = cos(theta) * max(30, 3 * bar_height)
-        self.y1 = sin(theta) * max(30, 3 * bar_height)
+        bar_height = self.max_height - self.draw_y
+
+        #Make radius relative to screen size?
+        #r = ceil(min(size[0], size[1]) / 15)
+        r = 30
+        theta = (2 * pi * self.index / settings.b_count) - (pi / 4)
+        #Use window center or account for info gap?
+        #self.c = (ceil(size[0] / 2), ceil((size[1] - text_gap) / 2))
+        self.c = (ceil(size[0] / 2), ceil(size[1] / 2))
+        self.inner = (r * cos(theta), r * sin(theta))
+        self.outer = (max(r, 2 * bar_height) * cos(theta), max(r, 2 * bar_height) * sin(theta))
         if color is not None:
             self.color = color
     def draw(self, screen):
-        pygame.draw.line(screen, self.color, (400 + self.x0, 200 + self.y0), (400 + self.x1, 200 + self.y1), ceil(self.width / 2))
+        #width adjustment?
+        pygame.draw.line(screen, self.color, (self.c[0] + self.inner[0], self.c[1] + self.inner[1]), (self.c[0] + self.outer[0], self.c[1] + self.outer[1]), ceil(self.width / 3))
 
 def build_bars(settings, width):
     bars = []
