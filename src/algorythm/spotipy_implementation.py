@@ -1,6 +1,5 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-import requests
 
 #  establish app credentials
 cid = '***REMOVED***'
@@ -14,8 +13,8 @@ sp = spotipy.Spotify(client_credentials_manager=auth_manager)
 track_name = 'PIN PIN'
 
 def search_for_id(track_name, artist):
-    search = sp.search(q="track:{} artist:{}".format(track_name, artist), limit=1, offset=0, type='track')
     try:
+        search = sp.search(q="track:{} artist:{}".format(track_name, artist), limit=1, offset=0, type='track')
         track_id = search['tracks']['items'][0]['id']
         return track_id
     except:
