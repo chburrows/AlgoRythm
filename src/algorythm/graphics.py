@@ -75,6 +75,7 @@ def build_bars(settings, width):
         # creation of the *Bar objects and add them to the list
         # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
         settings.b_width = ceil((width - (settings.b_count * settings.b_gap)) / len(backend.last_freqs))
+        settings.b_width = 1 if settings.b_width <= 0 else settings.b_width
         if layout == 0:
             for i in range(len(backend.last_freqs)):
                 bars.append(AudioBar(settings, i))
@@ -107,8 +108,8 @@ def get_song_imgs(settings, fonts):
     font_artist, font_title = fonts
     txt_color = settings.text_color
 
-    artist_img = font_artist.render(txt_artist, True, txt_color, INVIS)
-    title_img = font_title.render(txt_title, True, txt_color, INVIS)
+    artist_img = font_artist.render(txt_artist, True, txt_color, settings.bkg_color)
+    title_img = font_title.render(txt_title, True, txt_color, settings.bkg_color)
     return artist_img, title_img
 
 def mix_colors(colors, mix):
@@ -152,10 +153,10 @@ def main():
     font_hint = pygame.font.SysFont(None, 24)
     font_hint2 = pygame.font.SysFont(None, 22, italic=True)
 
-    hint_imgs = [font_hint.render('Key Hints:', True, WHITE, INVIS),
-        font_hint2.render('Press S for Settings', True, WHITE, INVIS),
-        font_hint2.render('Press M to toggle window border', True, WHITE, INVIS),
-        font_hint2.render('Press L to toggle layout', True, WHITE, INVIS)]
+    hint_imgs = [font_hint.render('Key Hints:', True, WHITE),
+        font_hint2.render('Press S for Settings', True, WHITE),
+        font_hint2.render('Press M to toggle window border', True, WHITE),
+        font_hint2.render('Press L to toggle layout', True, WHITE)]
 
     # Song Desciption Text
     # Allow for custom fonts in future
@@ -268,11 +269,11 @@ def main():
         if displaySettings:
             # run after s key has been pressed
             temp_chunk = (settings.b_count, settings.b_gap)
-            temp_text = (settings.artist_size, settings.title_size, settings.text_color)
+            temp_text = (settings.artist_size, settings.title_size, settings.text_color, settings.bkg_color)
             # run settings draw function and store resulting bools
             displaySettings, run = settings.draw(screen, clock, size, cover_obj['colors'])
             # Update Text Sizes and color
-            if temp_text != (settings.artist_size, settings.title_size, settings.text_color):
+            if temp_text != (settings.artist_size, settings.title_size, settings.text_color, settings.bkg_color):
                 font_artist = pygame.font.SysFont(custom_font, settings.artist_size, bold=True)
                 font_title = pygame.font.SysFont(custom_font, settings.title_size, bold=True)
                 song_fonts = font_artist, font_title
@@ -294,7 +295,6 @@ def main():
                 bars = build_bars(settings, size[0])
             settings.save("algorythm_settings")
 
-
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
         if settings.dyn_color and cover_obj['colors'] is not None:
             song_colors = cover_obj['colors'][:-1] + cover_obj['colors'][::-1]
@@ -309,7 +309,7 @@ def main():
             bar.update(settings, backend.last_levels[i] * settings.multiplier, deltaTime, info_height, color=bar_color)
 
         # drawing logic - should be handled mostly in AudioBar draw
-        screen.fill( INVIS )
+        screen.fill(settings.bkg_color)
 
         if border:
             # Print each hint text if the border is enabled
@@ -322,11 +322,13 @@ def main():
 
 
         # Print song text
-        screen.blit(artist_img, (info_height+10, size[1]-info_height))
-        screen.blit(title_img, (info_height+10, size[1]-title_img.get_height()))
+        if settings.enable_artist:
+            screen.blit(artist_img, (info_height*settings.enable_cover+10, size[1]-info_height))
+        if settings.enable_song:
+            screen.blit(title_img, (info_height*settings.enable_cover+10, size[1]-title_img.get_height()))
 
         # Display cover if it exists
-        if song_cover is not None:
+        if song_cover is not None and settings.enable_cover:
             if cover_changed or cover_img is None:
                 cover_img = pygame.transform.smoothscale(song_cover, (info_height,info_height))
                 cover_changed = False
