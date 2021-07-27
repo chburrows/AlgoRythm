@@ -168,7 +168,8 @@ def main():
     hint_imgs = [font_hint.render('Key Hints:', True, WHITE, INVIS),
         font_hint2.render('Press S for Settings', True, WHITE, INVIS),
         font_hint2.render('Press M to toggle window border', True, WHITE, INVIS),
-        font_hint2.render('Press L to toggle layout', True, WHITE, INVIS)]
+        font_hint2.render('Press L to toggle layout', True, WHITE, INVIS),
+        font_hint2.render('Press H to toggle key hints', True, WHITE, INVIS)]
 
     # Song Desciption Text
     # Allow for custom fonts in future
@@ -224,6 +225,7 @@ def main():
     color_index = 0
     t = None
     t2 = None
+    display_hints = True
 
     while run:
         # Track ticks for smoothing
@@ -267,6 +269,8 @@ def main():
                 elif event.key == pygame.K_l:
                     settings.layout = (settings.layout + 1) % 3
                     bars = build_bars(settings, size[0])
+                elif event.key == pygame.K_h:
+                    display_hints = not display_hints
             
         if last_song_title != txt_title:
             # Check to see if the song changed, if so, re-render the text
@@ -324,7 +328,7 @@ def main():
         for bar in bars:
             bar.draw(screen)
 
-        if border:
+        if border and display_hints:
             # Print each hint text if the border is enabled
             for index, img in enumerate(hint_imgs):
                 screen.blit(img, (size[0]*.75-30 ,15+(img.get_height()*index)))
