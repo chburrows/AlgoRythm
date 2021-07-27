@@ -89,15 +89,17 @@ def get_song_info():
     txt_title, txt_artist =  media.collect_title_artist()
 
 def get_cover_obj():
-    global cover_obj, song_cover, cover_changed
+    global cover_obj, song_cover, cover_changed, default_cover
     cover_obj = media.generate_colors()
     pil_img = cover_obj['album_art']
     if pil_img is not None:
-        song_cover = pygame.image.fromstring(pil_img.tobytes(), pil_img.size, pil_img.mode).convert()
-        cover_changed = True
+        try:
+            song_cover = pygame.image.fromstring(pil_img.tobytes(), pil_img.size, pil_img.mode).convert()
+        except ValueError:
+            song_cover = default_cover
     else:
-        # Could set song_cover with a template img here when no cover is found
-        song_cover = None
+        song_cover = default_cover
+    cover_changed = True
 
 def get_song_imgs(settings, fonts):
     global txt_artist, txt_title
@@ -112,6 +114,16 @@ def get_song_imgs(settings, fonts):
 def mix_colors(colors, mix):
     return [int(sqrt((1 - mix) * colors[0][i]**2 + mix * colors[1][i]**2)) for i in range(3)]
 
+def get_default_cover(font, color):
+    #default album art
+    default_cover_size = 64
+    default_cover = pygame.Surface((default_cover_size,default_cover_size))
+    default_cover.fill((0,0,0))
+    default_cover_text = font.render("N/A", True, color, INVIS)
+    default_cover_text = pygame.transform.scale(default_cover_text, (default_cover_size,int(default_cover_size * .7)))
+    default_cover.blit(default_cover_text, (0, (default_cover_size - default_cover_text.get_height()) / 2))
+    return default_cover
+
 # Globals
 INVIS = (1,0,1)
 WHITE = (255, 255, 255)
@@ -122,9 +134,10 @@ txt_title, txt_artist = ("Title", "Artist")
 cover_obj = None
 song_cover = None
 cover_changed = False
+default_cover = None
 
 def main():
-    global song_cover, cover_obj, cover_changed, txt_title, txt_artist
+    global song_cover, cover_obj, cover_changed, txt_title, txt_artist, default_cover
     pygame.init()
     pygame.font.init()
     settings = Settings()
@@ -165,6 +178,8 @@ def main():
     font_artist = pygame.font.SysFont(custom_font, artist_size, bold=True)
     font_title = pygame.font.SysFont(custom_font, title_size, bold=True)
     song_fonts = font_artist, font_title
+
+    default_cover = get_default_cover(font_artist, settings.text_color)
 
     # Create thread for getting song info
     t = threading.Thread(target=get_song_info)
@@ -271,6 +286,7 @@ def main():
                 font_artist = pygame.font.SysFont(custom_font, settings.artist_size, bold=True)
                 font_title = pygame.font.SysFont(custom_font, settings.title_size, bold=True)
                 song_fonts = font_artist, font_title
+                default_cover = get_default_cover(font_artist, settings.text_color)
                 artist_img, title_img = get_song_imgs(settings, song_fonts)
                 info_height = artist_img.get_height() + title_img.get_height()
                 if temp_text[:2] != (settings.artist_size, settings.title_size):
@@ -287,12 +303,14 @@ def main():
             settings.save("algorythm_settings")
 
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
-        if cover_obj['colors'] is not None:
+        if cover_obj['colors'] is not None and len(cover_obj['colors']) > 1:
             song_colors = cover_obj['colors'][:-1] + cover_obj['colors'][::-1]
             color_index = color_index % (len(song_colors) - 1)
             gradient_colors = [hex_to_rgb(x) for x in song_colors[color_index:color_index+2]]
             color_mix = timer / cover_obj['time_per_beat']
             bar_color = mix_colors(gradient_colors,color_mix)
+        elif len(cover_obj['colors']) == 1:
+            bar_color = hex_to_rgb(cover_obj['colors'][0])
         else:
             bar_color = settings.b_color
 
