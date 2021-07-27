@@ -35,7 +35,7 @@ class AudioBar:
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
-        self.rect = [self.x, self.draw_y, self.width, bar_height]
+        self.rect = pygame.Rect([self.x, (size[1] - self.max_height - text_gap) + self.draw_y, self.width, bar_height])
         if color is not None:
             self.color = color
     def draw(self, screen):
@@ -49,7 +49,8 @@ class DualBar(AudioBar):
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
-        self.rect = [self.x, self.draw_y + bar_height/2 - self.max_height/2, self.width, bar_height]
+        self.rect = pygame.Rect([self.x, 0, self.width, bar_height])
+        self.rect.centery = (size[1] - text_gap)/2
         if color is not None:
             self.color = color
 
@@ -185,7 +186,7 @@ def main():
     
     # Connect to backend and create bars
     backend.start_stream(settings)
-    settings.b_height = size[1] - info_height
+    settings.b_height = size[1] - info_height if settings.b_height == 0 else settings.b_height
     bars = build_bars(settings, size[0])
 
     # Create custom event for retrieving song info
@@ -295,7 +296,7 @@ def main():
 
 
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
-        if cover_obj['colors'] is not None:
+        if settings.dyn_color and cover_obj['colors'] is not None:
             song_colors = cover_obj['colors'][:-1] + cover_obj['colors'][::-1]
             color_index = color_index % (len(song_colors) - 1) # TODO: Fix modulo by zero crash when only one in song_colors
             gradient_colors = [hex_to_rgb(x) for x in song_colors[color_index:color_index+2]]
@@ -310,14 +311,15 @@ def main():
         # drawing logic - should be handled mostly in AudioBar draw
         screen.fill( INVIS )
 
-        # Draw each bars
-        for bar in bars:
-            bar.draw(screen)
-
         if border:
             # Print each hint text if the border is enabled
             for index, img in enumerate(hint_imgs):
                 screen.blit(img, (size[0]*.75-30 ,15+(img.get_height()*index)))
+        
+        # Draw each bars
+        for bar in bars:
+            bar.draw(screen)
+
 
         # Print song text
         screen.blit(artist_img, (info_height+10, size[1]-info_height))

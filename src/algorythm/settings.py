@@ -7,10 +7,11 @@ import pickle
 
 class Settings:
     def __init__(self, 
-            normalization = 100, smoothing = 100, multiplier = 25, 
-            b_width = 15, b_height = 150, b_gap = 2, b_count = 64, b_color = (255, 255, 255), 
+            normalization = 100, smoothing = 10, multiplier = 25, 
+            b_width = 15, b_height = 0, b_gap = 2, b_count = 64, b_color = (255, 255, 255), 
             artist_size = 48, title_size = 32, text_color = (255, 255, 255),
-            layout = 0, size = (1200, 600)
+            layout = 0, size = (1200, 600),
+            dyn_color = False
         ):
         # All are public
         # Vis Settings
@@ -34,6 +35,9 @@ class Settings:
         # Layout is an int that corresponds to type. 0 = Normal, 1 = Inverted, 2 = Dual
         self.layout = layout
         self.size = size
+
+        # Button Settings
+        self.dyn_color = dyn_color
 
     def save(self, filename):
         # pickle and save settings to file
@@ -126,8 +130,10 @@ class Settings:
 
         # Starting x_pos for text options
 
-        save_bttn = Button("Save", (150, 60), (width-180, height-90), (0,230,38), (0,179,30), (0,255,42), text_size=32)
-            
+        save_bttn = Button("Save", (150, 60), (width-180, height-90), (0,230,38), (0,179,30), (0,255,42), text_size=32, set_border=True)
+        dynamic_checkbox = Button("", (20,20), (width*7//12, 90+30*len(opt_imgs)), [97]*3, [158]*3, WHITE, True, toggle=True)
+        dynamic_checkbox.active = self.dyn_color
+
         while True:
             x_pos = width // 3
             events = pygame.event.get()
@@ -153,6 +159,8 @@ class Settings:
                     width,height = size = self.size = screen.get_size()
                     save_bttn.pos = (width-180, height-90)
                     save_bttn.rect.topleft = save_bttn.pos
+                    dynamic_checkbox.pos = (width*7//12, 90+30*len(opt_imgs))
+                    dynamic_checkbox.rect.topleft = dynamic_checkbox.pos
 
             # If collecting input from a text box, check if there was an update to value, then assign it to settings attribute
             for ti in text_inputs:
@@ -186,6 +194,10 @@ class Settings:
                 except ValueError:
                     # Validate input, show err in button
                     save_bttn.temp_change((200, 10, 0), "Invalid Input", 3000)
+
+            # Checkbox for dynamic color checked
+            if dynamic_checkbox.update(events):
+                self.dyn_color = not self.dyn_color
 
             screen.fill( BACK_COLOR )
 
@@ -227,6 +239,7 @@ class Settings:
 
             # NOTE: For anything else that needs to be displayed, create an object with pygame (such as Rect), and draw it here with pygame.draw
             save_bttn.draw(screen)
+            dynamic_checkbox.draw(screen)
 
             pygame.display.flip()
             clock.tick(30)
