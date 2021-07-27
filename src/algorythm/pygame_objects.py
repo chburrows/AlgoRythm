@@ -211,16 +211,20 @@ class TextInput:
 
 class Button:
     def __init__(self, text, size, pos,
-    inactive_color, hover_color, clicked_color, border_color=(0,0,0),
-    text_size=24, text_color=(0,0,0)):
+    inactive_color, hover_color, clicked_color, set_border=False, border_color=(0,0,0),
+    text_size=24, text_color=(0,0,0), toggle=False):
         self.text = text
         self.size = size
         self.inactive_color = inactive_color
         self.hover_color = hover_color
         self.clicked_color = clicked_color
+        self.set_border = set_border
         self.border_color = border_color
         self.text_size = text_size
         self.text_color = text_color
+        self.toggle = toggle
+
+        self.active = False
 
         self.active_color = inactive_color
         self.pos = pos
@@ -245,17 +249,29 @@ class Button:
                 m_pos = pygame.mouse.get_pos()
                 if self.check_collide(m_pos):
                     if ev.type == pl.MOUSEBUTTONDOWN:
-                        self.active_color = self.clicked_color
+                        if self.toggle:
+                            self.active_color = self.clicked_color if not self.active else self.inactive_color
+                            self.active = not self.active
+                        else:
+                            self.active_color = self.clicked_color
                         return True
                     else:
                         self.active_color = self.hover_color
                 else:
-                    self.active_color = self.inactive_color
+                    if self.toggle:
+                        self.active_color = self.clicked_color if self.active else self.inactive_color
+                    else:
+                        self.active_color = self.inactive_color
 
         self.clock.tick()
         return False
         
     def draw(self, screen):
+        if self.set_border:
+            b_rect = pygame.Rect(self.rect)
+            b_rect.size = (self.size[0]+6, self.size[1]+6)
+            b_rect.topleft = (self.pos[0]-3, self.pos[1]-3)
+            pygame.draw.rect(screen, self.border_color, b_rect)
         pygame.draw.rect(screen, self.active_color, self.rect)
         t_size = self.text_img.get_size()
         screen.blit(self.text_img, (self.pos[0] + self.size[0]/2 - t_size[0]/2, self.pos[1] + self.size[1]/2 - t_size[1]/2))
