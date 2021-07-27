@@ -1,8 +1,10 @@
 import pygame
 from win32con import EVENT_OBJECT_STATECHANGE
 from algorythm.collect_media_info import generate_colors
+from algorythm.bars import *
 from algorythm.pygame_objects import TextInput, Button
 import pickle
+import random
 
 # Textbox reference https://stackoverflow.com/questions/46390231/how-can-i-create-a-text-input-box-with-pygame
 
@@ -151,6 +153,13 @@ class Settings:
         song_boxes[1].active = self.enable_song
         song_boxes[2].active = self.enable_cover
 
+        # Preview
+        p_width = width//3 - 30
+        preview_bars = build_bars(self, p_width, p_width//(self.b_gap+self.b_width))
+        for bar in preview_bars:
+            bar.max_height = height//3
+            bar.update(self, random.random()/100 * self.multiplier, 30)
+
         while True:
             # Starting x_pos for text options
             x_pos = width // 3
@@ -235,6 +244,9 @@ class Settings:
                     # Validate input, show err in button
                     save_bttn.temp_change((200, 10, 0), "Invalid Input", 3000)
 
+                for bar in preview_bars:
+                    bar.update(self, random.random()/100 * self.multiplier, 30)
+
             # If collecting input from a text box, check if there was an update to value, then assign it to settings attribute
             for ti in text_inputs:
                 ti.update(events)
@@ -295,6 +307,11 @@ class Settings:
             save_bttn.draw(screen)
             dynamic_checkbox.draw(screen)
             for cb in song_boxes: cb.draw(screen) 
+
+            # Display preview
+            for bar in preview_bars:
+                bar.update_properties(self)
+                bar.draw(screen)
 
             pygame.display.flip()
             clock.tick(30)
