@@ -7,7 +7,7 @@ import pickle
 
 class Settings:
     def __init__(self, 
-            sensitivity = 0, smoothing = 7, multiplier = 25, 
+            sensitivity = 0, smoothing = 8, multiplier = 6, 
             b_width = 15, b_height = 150, b_gap = 2, b_count = 64, b_color = (255, 255, 255), 
             artist_size = 48, title_size = 32, text_color = (255, 255, 255),
             layout = 0
