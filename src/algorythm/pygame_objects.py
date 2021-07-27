@@ -179,6 +179,10 @@ class TextInput:
 
     def get_surface(self):
         return self.surface
+    
+    def set_text(self, txt):
+        self.surface = self.font_object.render(txt, self.antialias, self.text_color)
+        self.rect = self.surface.get_rect()
 
     def get_text(self):
         return self.input_string
