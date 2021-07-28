@@ -224,7 +224,7 @@ def main():
 
         if displaySettings:
             # run after s key has been pressed
-            temp_chunk = (settings.b_count, settings.b_gap)
+            temp_chunk = (settings.b_count, settings.b_gap, settings.layout)
             temp_text = (settings.artist_size, settings.title_size, settings.text_color, settings.bkg_color)
             # run settings draw function and store resulting bools
             displaySettings, run = settings.draw(screen, clock, size, cover_obj['colors'])
@@ -241,7 +241,7 @@ def main():
             # Update each bar with new settings
             for bar in bars:
                 bar.update_properties(settings)
-            if temp_chunk != (settings.b_count, settings.b_gap):
+            if temp_chunk != (settings.b_count, settings.b_gap, settings.layout):
                 # If chunk was changed, restart stream and rebuld bars
                 backend.restart_stream(settings)
                 bars = build_bars(settings, size[0])
@@ -275,7 +275,6 @@ def main():
         # Draw each bars
         for bar in bars:
             bar.draw(screen)
-
 
         # Print song text
         if settings.enable_artist:
