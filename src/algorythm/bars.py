@@ -58,13 +58,12 @@ class InvertedBar(AudioBar):
         if color is not None:
             self.color = color
 
+# For preview only
 def build_bars(settings, count):
     bars = []
     layout = settings.layout
 
     # creation of the *Bar objects and add them to the list
-    # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
-
     if layout == 0:
         for i in range(count):
             bars.append(AudioBar(settings, i))
