@@ -1,10 +1,10 @@
 import pygame
-from win32con import EVENT_OBJECT_STATECHANGE
 from algorythm.collect_media_info import generate_colors
 from algorythm.bars import *
 from algorythm.pygame_objects import TextInput, Button
 import pickle
 import random
+import copy
 
 # Textbox reference https://stackoverflow.com/questions/46390231/how-can-i-create-a-text-input-box-with-pygame
 
@@ -46,6 +46,9 @@ class Settings:
         self.enable_artist = en_artist
         self.enable_song = en_song
         self.enable_cover = en_cover
+
+    def Settings(self, settings_):
+        return copy.deepcopy(settings_)
 
     def save(self, filename):
         # pickle and save settings to file
@@ -154,11 +157,15 @@ class Settings:
         song_boxes[2].active = self.enable_cover
 
         # Preview
-        p_width = width//3 - 30
-        preview_bars = build_bars(self, p_width, p_width//(self.b_gap+self.b_width))
-        for bar in preview_bars:
-            bar.max_height = height//3
-            bar.update(self, random.random()/100 * self.multiplier, 30)
+        def build_preview_bars():
+            p_width = width//3 - 30
+            preview_bars = build_bars(self, p_width//(self.b_gap+self.b_width))
+            for bar in preview_bars:
+                bar.max_height = bar.draw_y = height//3
+                bar.update(self, random.gauss(.5, 0.15)*2/(bar.index +1) * self.multiplier, 0.015, 30, color=self.b_color)
+            return preview_bars
+
+        p_bars = build_preview_bars()
 
         while True:
             # Starting x_pos for text options
@@ -179,11 +186,13 @@ class Settings:
                         if s_rect.collidepoint(pos):
                             self.b_color = sample_rgb_colors[i]
                             text_inputs[7].input_string = rgb_to_hex(self.b_color)
+                            p_bars = build_preview_bars()
                     if colors is not None:
                         for index, c_rect in enumerate(color_palette):
                             if c_rect.collidepoint(pos):
                                 self.b_color = colors[index]
                                 text_inputs[7].input_string = rgb_to_hex(self.b_color)
+                                p_bars = build_preview_bars()
 
                 elif event.type == pygame.VIDEORESIZE:
                     width,height = size = self.size = screen.get_size()
@@ -191,27 +200,42 @@ class Settings:
                     save_bttn.rect.topleft = save_bttn.pos
                     dynamic_checkbox.pos = (width*7//12, 90+30*len(opt_imgs))
                     dynamic_checkbox.rect.topleft = dynamic_checkbox.pos
+                    for ind, b in enumerate(song_boxes):
+                        b.pos = (width*11//12, 90+30*(ind+3))
+                        b.rect.topleft = b.pos
+                    p_bars = build_preview_bars()
 
             # If save button was pressed, update setting values 
             if save_bttn.update(events):
                 try:
                     norm = int(text_inputs[0].get_text())
-                    self.normalization = norm if norm >= 0 else 100 if norm > 100 else 0
+                    self.normalization = norm if norm >= 0 and norm <= 100 else 100 if norm > 100 else 0
                     text_inputs[0].input_string = str(self.normalization)
 
                     smooth = int(text_inputs[1].get_text())
-                    self.smoothing = smooth if smooth > 0 else 100 if smooth > 100 else 1
+                    self.smoothing = smooth if smooth > 0 and smooth <= 100 else 100 if smooth > 100 else 1
                     text_inputs[1].input_string = str(self.smoothing)
 
                     mult = int(text_inputs[2].get_text())
                     self.multiplier = mult if mult > 0 else 1
                     text_inputs[2].input_string = str(self.multiplier)
 
-                    self.b_width = int(text_inputs[3].get_text())
-                    self.b_height = int(text_inputs[4].get_text())
-                    self.b_gap = int(text_inputs[5].get_text())
+                    wid = int(text_inputs[3].get_text())
+                    self.b_width = wid if wid > 0 else 1
+                    text_inputs[3].input_string = str(self.b_width)
+                    
+                    ht = int(text_inputs[4].get_text())
+                    self.b_height = ht if ht > 0 else 1
+                    text_inputs[4].input_string = str(self.b_height)
+
+                    gap = int(text_inputs[5].get_text())
+                    self.b_gap = gap if gap >= 0 else 0
+                    text_inputs[5].input_string = str(self.b_gap)
+                    
                     self.b_count = min(int(text_inputs[6].get_text()), width//(self.b_gap+1))
+                    self.b_count = 1 if self.b_count < 1 else self.b_count
                     text_inputs[6].input_string = str(self.b_count)
+
                     # Bar Color Option
                     b_c = text_inputs[7].get_text()
                     if b_c.upper() == 'INV':
@@ -244,8 +268,7 @@ class Settings:
                     # Validate input, show err in button
                     save_bttn.temp_change((200, 10, 0), "Invalid Input", 3000)
 
-                for bar in preview_bars:
-                    bar.update(self, random.random()/100 * self.multiplier, 30)
+                p_bars = build_preview_bars()
 
             # If collecting input from a text box, check if there was an update to value, then assign it to settings attribute
             for ti in text_inputs:
@@ -309,8 +332,7 @@ class Settings:
             for cb in song_boxes: cb.draw(screen) 
 
             # Display preview
-            for bar in preview_bars:
-                bar.update_properties(self)
+            for bar in p_bars:
                 bar.draw(screen)
 
             pygame.display.flip()

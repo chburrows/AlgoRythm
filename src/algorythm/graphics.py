@@ -96,8 +96,11 @@ def get_cover_obj():
     cover_obj = media.generate_colors()
     pil_img = cover_obj['album_art']
     if pil_img is not None:
-        song_cover = pygame.image.fromstring(pil_img.tobytes(), pil_img.size, pil_img.mode).convert()
-        cover_changed = True
+        try:
+            song_cover = pygame.image.fromstring(pil_img.tobytes(), pil_img.size, pil_img.mode).convert()
+            cover_changed = True
+        except:
+            song_cover = None
     else:
         # Could set song_cover with a template img here when no cover is found
         song_cover = None

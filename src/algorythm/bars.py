@@ -4,19 +4,23 @@ from math import ceil
 class AudioBar:
     def __init__(self, settings, i):
         self.index = i
-        self.max_height = settings.b_height
         self.update_properties(settings)
     def update_properties(self, settings):
+        self.max_height = settings.b_height
         self.width = settings.b_width
         self.gap = settings.b_gap
         self.color = settings.b_color
         self.x = self.width * self.index + (self.index * self.gap)
         self.draw_y = self.max_height
-    def update(self, settings, intensity, text_gap):
-        bar_height = intensity * self.max_height
-        self.rect = pygame.Rect([self.x+15, 0, self.width, bar_height])
-        self.rect.bottom = settings.size[1]-text_gap
-        self.color = settings.b_color
+    def update(self, settings, intensity, dt, text_gap, color=None):
+        newPos = self.max_height * (1 - intensity * (self.index*settings.normalization/100+1) / 10) # Might need some tweaking
+        accel = (newPos - self.draw_y) * 100/settings.smoothing # Def needs some tweaking
+        self.draw_y += accel * dt
+        self.draw_y = max(0, min(self.max_height, self.draw_y))
+        bar_height = self.max_height-self.draw_y
+        self.rect = pygame.Rect([self.x, (settings.size[1] - self.max_height - text_gap) + self.draw_y, self.width, bar_height])
+        if color is not None:
+            self.color = color
     def draw(self, screen):
         #draw the rectangle to the screen using pygame draw rect
         pygame.draw.rect(screen, self.color, self.rect, 0)
@@ -44,7 +48,7 @@ class InvertedBar(AudioBar):
         if color is not None:
             self.color = color
 
-def build_bars(settings, width, count):
+def build_bars(settings, count):
     bars = []
     layout = settings.layout
 
