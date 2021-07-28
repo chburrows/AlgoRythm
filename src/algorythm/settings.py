@@ -112,11 +112,11 @@ class Settings:
 
         # Text Input
         text_inputs = [TextInput(str(self.normalization), max_string_length=3),
-            TextInput(str(self.smoothing), max_string_length=4),
+            TextInput(str(self.smoothing), max_string_length=3),
             TextInput(str(self.multiplier), max_string_length=4),
             TextInput(str(self.b_width), max_string_length=4),
             TextInput(str(self.b_height), max_string_length=4),
-            TextInput(str(self.b_gap), max_string_length=2),
+            TextInput(str(self.b_gap), max_string_length=3),
             TextInput(str(self.b_count), max_string_length=4),
             TextInput(rgb_to_hex(self.b_color), max_string_length=6),
             TextInput(rgb_to_hex(self.bkg_color), max_string_length=6)] # Convert rgb to hex
@@ -265,6 +265,7 @@ class Settings:
                         raise ValueError("Invalid Hex")
                     else:
                         self.b_color = hex_to_rgb(b_c)
+
                     # Background Color Option
                     bkg_c = text_inputs[8].get_text()
                     if bkg_c.upper() == 'INV':
@@ -274,8 +275,16 @@ class Settings:
                         raise ValueError("Invalid Hex")
                     else:
                         self.bkg_color = hex_to_rgb(bkg_c)
-                    self.artist_size = int(song_inputs[0].get_text())
-                    self.title_size = int(song_inputs[1].get_text())
+
+                    # Song Options
+                    a_size = int(song_inputs[0].get_text())
+                    self.artist_size = a_size if a_size > 0 else self.artist_size
+                    song_inputs[0].input_string = str(self.artist_size)
+
+                    t_size = int(song_inputs[1].get_text())
+                    self.title_size = t_size if t_size > 0 else self.title_size
+                    song_inputs[1].input_string = str(self.title_size)
+
                     t_c = song_inputs[2].get_text()
                     if t_c.upper() == 'INV':
                         self.text_color = (1,0,1)
