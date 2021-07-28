@@ -1,7 +1,6 @@
 from math import ceil,sqrt
 from os.path import isfile
 
-from pygame import color
 from pygame.constants import RESIZABLE
 
 import algorythm.collect_media_info as media
@@ -44,8 +43,8 @@ class AudioBar:
 
 class DualBar(AudioBar):
     def update(self, settings, intensity, dt, text_gap, color=None):
-        newPos = self.max_height * (1 - intensity * (self.index+1) / 20)
-        accel = (newPos - self.draw_y) * settings.smoothing
+        newPos = self.max_height * (1 - intensity * (self.index*settings.normalization/100+1) / 10) # Might need some tweaking
+        accel = (newPos - self.draw_y) * 100/settings.smoothing # Def needs some tweaking
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
@@ -56,8 +55,8 @@ class DualBar(AudioBar):
 
 class InvertedBar(AudioBar):
     def update(self, settings, intensity, dt, text_gap, color=None):
-        newPos = self.max_height * (1 - intensity * (self.index+1) / 20)
-        accel = (newPos - self.draw_y) * settings.smoothing
+        newPos = self.max_height * (1 - intensity * (self.index*settings.normalization/100+1) / 10) # Might need some tweaking
+        accel = (newPos - self.draw_y) * 100/settings.smoothing # Def needs some tweaking
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y

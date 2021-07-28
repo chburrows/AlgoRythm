@@ -12,7 +12,7 @@ class AudioBar:
         self.color = settings.b_color
         self.x = self.width * self.index + (self.index * self.gap)
         self.draw_y = self.max_height
-    def update(self, settings, intensity, dt, text_gap, color=None):
+    def update(self, settings, intensity, dt, text_gap, color=None, height=None):
         newPos = self.max_height * (1 - intensity * (self.index*settings.normalization/100+1) / 10) # Might need some tweaking
         accel = (newPos - self.draw_y) * 100/settings.smoothing # Def needs some tweaking
         self.draw_y += accel * dt
@@ -26,25 +26,35 @@ class AudioBar:
         pygame.draw.rect(screen, self.color, self.rect, 0)
 
 class DualBar(AudioBar):
-    def update(self, settings, intensity, dt, text_gap, color=None):
-        newPos = self.max_height * (1 - intensity * (self.index+1) / 20)
-        accel = (newPos - self.draw_y) * settings.smoothing
+    def update(self, settings, intensity, dt, text_gap, color=None, height=None):
+        if height is None:
+            height=settings.size[1]
+
+        newPos = self.max_height * (1 - intensity * (self.index*settings.normalization/100+1) / 10) # Might need some tweaking
+        accel = (newPos - self.draw_y) * 100/settings.smoothing # Def needs some tweaking
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
         self.rect = pygame.Rect([self.x, 0, self.width, bar_height])
-        self.rect.centery = (settings.size[1] - text_gap)/2
+        if height is None:
+            self.rect.centery = (settings.size[1] - text_gap)/2
+        else:
+            self.rect.centery = settings.size[1] - text_gap - height/2
         if color is not None:
             self.color = color
 
 class InvertedBar(AudioBar):
-    def update(self, settings, intensity, dt, text_gap, color=None):
-        newPos = self.max_height * (1 - intensity * (self.index+1) / 20)
-        accel = (newPos - self.draw_y) * settings.smoothing
+    def update(self, settings, intensity, dt, text_gap, color=None, height=None):
+        if height is None:
+            height=settings.size[1]
+
+        newPos = self.max_height * (1 - intensity * (self.index*settings.normalization/100+1) / 10) # Might need some tweaking
+        accel = (newPos - self.draw_y) * 100/settings.smoothing # Def needs some tweaking
         self.draw_y += accel * dt
         self.draw_y = max(0, min(self.max_height, self.draw_y))
         bar_height = self.max_height-self.draw_y
-        self.rect = [self.x, 0, self.width, bar_height]
+        self.rect = pygame.Rect([self.x, 0, self.width, bar_height])
+        self.rect.top = settings.size[1] - height - (text_gap if height is not None else 0)
         if color is not None:
             self.color = color
 
