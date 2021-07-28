@@ -66,16 +66,27 @@ class Settings:
     def draw(self, screen, clock, size, colors_hex):
         BACK_COLOR = (30, 30, 30)
 
-        WHITE = (255, 255, 255)
-        GRAY = (200, 200, 200)
-        BLACK = (0, 0, 0)
+        DARK_RED = (153, 0, 0)
         RED = (255, 0, 0)
-        BLUE = (0, 0, 255)
+        LIGHT_RED = (255, 102, 102)
+        ORANGE = (255,128,0)
+        YELLOW = (255, 255, 0)
+        LIME_GREEN = (128, 255, 0)
+        DARK_GREEN = (0, 153, 0)
         GREEN = (0, 255, 0)
+        LIGHT_GREEN = (102, 255, 102)
+        AQUA = (0, 255, 255)
+        PALE_BLUE = (0, 128, 255)
+        BLUE = (0, 0, 255)
+        PURPLE = (127, 0, 255)
+        PINK = (255, 0, 255)
+        BLACK = (0, 0, 0)
+        GRAY = (128,128,128)
+        WHITE = (255, 255, 255)
 
         width, height = size
 
-        sample_rgb_colors = [RED, GREEN, BLUE, WHITE, GRAY, BLACK]
+        sample_rgb_colors = [DARK_RED, RED, LIGHT_RED, ORANGE, YELLOW, LIME_GREEN, DARK_GREEN, GREEN, LIGHT_GREEN, AQUA, PALE_BLUE, BLUE, PURPLE, PINK, BLACK, GRAY, WHITE]
         colors = None
 
         # Call color scheme function, catch exceptions, and create rectangles for palette
@@ -91,8 +102,12 @@ class Settings:
                 color_palette.append(pygame.Rect(x_color + (20*i), y_color, 20, 20))
 
         sample_colors = []
-        for i in range(len(sample_rgb_colors)):
-            sample_colors.append(pygame.Rect(x_color + (20*i), y_color+20, 20, 20))
+        cutoff = width//60 - 1
+        for i in range(ceil(len(sample_rgb_colors)/cutoff)):
+            for j in range(cutoff):
+                if i*cutoff + j >= len(sample_rgb_colors):
+                    break
+                sample_colors.append(pygame.Rect(x_color + (20*j), y_color+(20*i)+20, 20, 20))
 
 
         # Text Input
@@ -119,6 +134,7 @@ class Settings:
         music_img = font.render('Music Properties', True, WHITE, BACK_COLOR)
         font_hint = pygame.font.SysFont(None, 24, italic=True)
         hint_img = font_hint.render("Press save to confirm values.", True, GRAY, BACK_COLOR)
+        preview_img = font.render('Visualizer Preview', True, WHITE, BACK_COLOR)
         
         # Option text
         # NOTE: To add a new font size for text follow the format below, changing the number to the desired font size
@@ -144,6 +160,7 @@ class Settings:
             font_options.render("Display Title:", True, WHITE, BACK_COLOR),
             font_options.render('Display Cover Art:', True, WHITE, BACK_COLOR)]
 
+
         # Button Objects
         save_bttn = Button("Save", (150, 60), (width-180, height-90), (0,230,38), (0,179,30), (0,255,42), text_size=32, set_border=True)
         dynamic_checkbox = Button("", (20,20), (width*7//12, 90+30*len(opt_imgs)), [97]*3, [158]*3, WHITE, True, toggle=True)
@@ -167,6 +184,7 @@ class Settings:
 
         p_bars = build_preview_bars()
 
+        width_diff = 0
         while True:
             # Starting x_pos for text options
             x_pos = width // 3
@@ -195,7 +213,9 @@ class Settings:
                                 p_bars = build_preview_bars()
 
                 elif event.type == pygame.VIDEORESIZE:
-                    width,height = size = self.size = screen.get_size()
+                    size = self.size = screen.get_size()
+                    width_diff = size[0] - width
+                    width, height = size
                     save_bttn.pos = (width-180, height-90)
                     save_bttn.rect.topleft = save_bttn.pos
                     dynamic_checkbox.pos = (width*7//12, 90+30*len(opt_imgs))
@@ -305,15 +325,23 @@ class Settings:
                     screen.blit(text_inputs[index].get_surface(), (x_pos*2-x_pos/4, y_pos))
                     text_inputs[index].set_pos((x_pos*2-x_pos/4, y_pos))
 
-            # Display sample color rectangles
+            # Display sample color rectangles, update pos if necessary
+            if width_diff != 0:
+                cutoff = width//60 - 1
+                for i in range(ceil(len(sample_rgb_colors)/cutoff)):
+                    for j in range(cutoff):
+                        if i*cutoff + j >= len(sample_rgb_colors):
+                            break
+                        sample_colors[i*cutoff+j].topleft=(width//3 + 10 + (20*j), 420+(20*i)+20)
+
             for i in range(len(sample_colors)):
-                sample_colors[i].left = x_pos + 10 + 20*i
                 pygame.draw.rect(screen, sample_rgb_colors[i], sample_colors[i])
 
             # Display color palette for gradient
             if colors is not None:
                 for ind, col in enumerate(colors):
-                    color_palette[ind].left = x_pos + 10 + 20*ind
+                    if width_diff != 0:
+                        color_palette[ind].x = width//3 + 10 + (20*ind)
                     pygame.draw.rect(screen, col, color_palette[ind])
 
             # Display Music Options
@@ -334,7 +362,12 @@ class Settings:
             # Display preview
             for bar in p_bars:
                 bar.draw(screen)
+            pr = preview_img.get_rect()
+            pr.centerx = x_pos//2
+            pr.bottom = height*2//3 - 50
+            screen.blit(preview_img, pr)
 
+            width_diff = 0
             pygame.display.flip()
             clock.tick(30)
 
