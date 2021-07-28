@@ -37,7 +37,7 @@ class Settings:
         self.text_color = text_color
 
         # Layout setting
-        # Layout is an int that corresponds to type. 0 = Normal, 1 = Inverted, 2 = Dual
+        # Layout is an int that corresponds to type. 0 = Normal, 1 = Inverted, 2 = Dual, 3 = Radial
         self.layout = layout
         self.size = size
 
@@ -160,6 +160,13 @@ class Settings:
             font_options.render("Display Title:", True, WHITE, BACK_COLOR),
             font_options.render('Display Cover Art:', True, WHITE, BACK_COLOR)]
 
+        # Choose layout
+        layout_opt_imgs = [font.render('Layout Selection', True, WHITE, BACK_COLOR),
+            font_options.render('Normal Bars:', True, WHITE, BACK_COLOR),
+            font_options.render('Inverted Bars:', True, WHITE, BACK_COLOR),
+            font_options.render('Dual Bars:', True, WHITE, BACK_COLOR),
+            font_options.render('Radial Bars:', True, WHITE, BACK_COLOR)]
+
         # Button Objects
         save_bttn = Button("Save", (150, 60), (width-180, height-90), (0,230,38), (0,179,30), (0,255,42), text_size=32, set_border=True)
         dynamic_checkbox = Button("", (20,20), (width*7//12, 90+30*len(opt_imgs)), [97]*3, [158]*3, WHITE, True, toggle=True)
@@ -171,6 +178,11 @@ class Settings:
         song_boxes[0].active = self.enable_artist
         song_boxes[1].active = self.enable_song
         song_boxes[2].active = self.enable_cover
+
+        layout_boxes = []
+        for i in range(4):
+            layout_boxes.append(Button("", (20,20), (width//4, 130+30*(i)), [97]*3, [158]*3, WHITE, True, toggle=True))
+            layout_boxes[i].active = True if i == self.layout else False
 
         # Preview
         def build_preview_bars():
@@ -211,7 +223,6 @@ class Settings:
                                 self.b_color = colors[index]
                                 text_inputs[7].input_string = rgb_to_hex(self.b_color)
                                 p_bars = build_preview_bars()
-
                 elif event.type == pygame.VIDEORESIZE:
                     size = self.size = screen.get_size()
                     width_diff = size[0] - width
@@ -223,6 +234,9 @@ class Settings:
                     for ind, b in enumerate(song_boxes):
                         b.pos = (width*11//12, 90+30*(ind+3))
                         b.rect.topleft = b.pos
+                    for i, lb in enumerate(layout_boxes):
+                        lb.pos = (width//4, 130+30*(i))
+                        lb.rect.topleft = lb.pos
                     p_bars = build_preview_bars()
 
             # If save button was pressed, update setting values 
@@ -317,6 +331,12 @@ class Settings:
                 self.enable_cover = not self.enable_cover
 
             screen.fill( BACK_COLOR )
+            
+            for i, lb in enumerate(layout_boxes):
+                if lb.update(events):
+                    self.layout = i
+                    p_bars = build_preview_bars()
+                lb.active = True if i == self.layout else False
 
             # NOTE: Text has to be blit to screen using the img rendered above. Just use screen.blit(img, (xpos, ypos))
             # Display title text
@@ -362,11 +382,17 @@ class Settings:
                     screen.blit(song_inputs[ind].get_surface(), (x_pos*3-x_pos/4, y_pos))
                     song_inputs[ind].set_pos((x_pos*3-x_pos/4, y_pos))
 
+            # Display layout opts
+            y_pos = 70
+            for i, lo_img in enumerate(layout_opt_imgs):
+                screen.blit(lo_img, (30, y_pos))
+                y_pos += 30 + (30 if i == 0 else 0)
 
             # NOTE: For anything else that needs to be displayed, create an object with pygame (such as Rect), and draw it here with pygame.draw
             save_bttn.draw(screen)
             dynamic_checkbox.draw(screen)
             for cb in song_boxes: cb.draw(screen) 
+            for lb in layout_boxes: lb.draw(screen)
 
             # Display preview
             for bar in p_bars:
