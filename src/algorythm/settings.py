@@ -160,7 +160,6 @@ class Settings:
             font_options.render("Display Title:", True, WHITE, BACK_COLOR),
             font_options.render('Display Cover Art:', True, WHITE, BACK_COLOR)]
 
-
         # Button Objects
         save_bttn = Button("Save", (150, 60), (width-180, height-90), (0,230,38), (0,179,30), (0,255,42), text_size=32, set_border=True)
         dynamic_checkbox = Button("", (20,20), (width*7//12, 90+30*len(opt_imgs)), [97]*3, [158]*3, WHITE, True, toggle=True)
@@ -175,11 +174,12 @@ class Settings:
 
         # Preview
         def build_preview_bars():
-            p_width = width//3 - 30
+            p_width = width//3 - 40
             preview_bars = build_bars(self, p_width//(self.b_gap+self.b_width))
             for bar in preview_bars:
                 bar.max_height = bar.draw_y = height//3
-                bar.update(self, random.gauss(.5, 0.15)*2/(bar.index +1) * self.multiplier, 0.015, 30, color=self.b_color)
+                bar.x += 20
+                bar.update(self, random.gauss(.5, 0.15)*2/(bar.index +1) * self.multiplier, 0.015, 30, color=self.b_color, height=height//3)
             return preview_bars
 
         p_bars = build_preview_bars()
