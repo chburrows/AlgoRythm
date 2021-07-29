@@ -14,7 +14,7 @@ class Settings:
             b_width = 15, b_height = 0, b_gap = 2, b_count = 150, b_color = (255, 255, 255), 
             artist_size = 68, title_size = 54, text_color = (255, 255, 255),
             layout = 0, size = (1300, 800), bkg_color = (0,0,0),
-            dyn_color = False, en_artist=True, en_song=True, en_cover=True
+            dyn_color = True, en_artist=True, en_song=True, en_cover=True
         ):
         # All are public
         # Vis Settings
@@ -173,6 +173,8 @@ class Settings:
         dynamic_checkbox = Button("", (20,20), (width*7//12, 90+30*len(opt_imgs)), [97]*3, [158]*3, WHITE, True, toggle=True)
         dynamic_checkbox.active = self.dyn_color
 
+        close_bttn = Button("x", (40,40), (width-60, 20), DARK_RED, RED, LIGHT_RED, True, text_size=48)
+
         song_boxes = []
         for i in range(3):
             song_boxes.append(Button("", (20,20), (width*11//12, 90+30*(i+3)), [97]*3, [158]*3, WHITE, True, toggle=True))
@@ -228,17 +230,20 @@ class Settings:
                     size = self.size = screen.get_size()
                     width_diff = size[0] - width
                     width, height = size
+                    # Reposition buttons/checkboxes
                     save_bttn.pos = (width-180, height-90)
                     save_bttn.rect.topleft = save_bttn.pos
                     dynamic_checkbox.pos = (width*7//12, 90+30*len(opt_imgs))
                     dynamic_checkbox.rect.topleft = dynamic_checkbox.pos
+                    close_bttn.pos = (width-60, 20)
+                    close_bttn.rect.topleft = close_bttn.pos
                     for ind, b in enumerate(song_boxes):
                         b.pos = (width*11//12, 90+30*(ind+3))
                         b.rect.topleft = b.pos
                     for i, lb in enumerate(layout_boxes):
                         lb.pos = (width//4, 130+30*(i))
                         lb.rect.topleft = lb.pos
-                    p_bars = build_preview_bars()
+                    p_bars = build_preview_bars() # Reset preview
 
             # If save button was pressed, update setting values 
             if save_bttn.update(events):
@@ -313,6 +318,10 @@ class Settings:
                     save_bttn.temp_change((200, 10, 0), "Invalid Input", 3000)
 
                 p_bars = build_preview_bars()
+
+            if close_bttn.update(events):
+                # Exit settings
+                return False, True
 
             # If collecting input from a text box, check if there was an update to value, then assign it to settings attribute
             for ti in text_inputs:
@@ -392,6 +401,7 @@ class Settings:
 
             # NOTE: For anything else that needs to be displayed, create an object with pygame (such as Rect), and draw it here with pygame.draw
             save_bttn.draw(screen)
+            close_bttn.draw(screen)
             dynamic_checkbox.draw(screen)
             for cb in song_boxes: cb.draw(screen) 
             for lb in layout_boxes: lb.draw(screen)
