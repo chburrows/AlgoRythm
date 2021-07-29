@@ -54,6 +54,7 @@ class TextInput:
             font_family = pygame.font.match_font(font_family)
 
         self.font_object = pygame.font.Font(font_family, font_size)
+        self.font_object.underline = True
 
         # Text-surface will be created during the first update call:
         self.surface = pygame.Surface((1, 1))
@@ -80,12 +81,12 @@ class TextInput:
 
     def update(self, events):
         for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pl.MOUSEBUTTONDOWN:
                 if self.check_collide(event.pos):
                     self.active = True
                 else:
                     self.active = False
-            if event.type == pygame.KEYDOWN and self.active:
+            if event.type == pl.KEYDOWN and self.active:
                 self.cursor_visible = True  # So the user sees where he writes
 
                 # If none exist, create counter for that key:
@@ -178,6 +179,10 @@ class TextInput:
 
     def get_surface(self):
         return self.surface
+    
+    def set_text(self, txt):
+        self.surface = self.font_object.render(txt, self.antialias, self.text_color)
+        self.rect = self.surface.get_rect()
 
     def get_text(self):
         return self.input_string
@@ -207,27 +212,109 @@ class TextInput:
             return True
         return False
 
+
+class Button:
+    def __init__(self, text, size, pos,
+    inactive_color, hover_color, clicked_color, set_border=False, border_color=(0,0,0),
+    text_size=24, text_color=(0,0,0), toggle=False):
+        self.text = text
+        self.size = size
+        self.inactive_color = inactive_color
+        self.hover_color = hover_color
+        self.clicked_color = clicked_color
+        self.set_border = set_border
+        self.border_color = border_color
+        self.text_size = text_size
+        self.text_color = text_color
+        self.toggle = toggle
+
+        self.active = False
+
+        self.active_color = inactive_color
+        self.pos = pos
+        self.rect = pygame.Rect(pos, size)
+
+        self.font = pygame.font.SysFont(None, self.text_size)
+        self.text_img = self.font.render(self.text, True, self.text_color)
+
+        self.temp_set = False
+        self.temp_count_ms = 0
+        self.clock = pygame.time.Clock()
+
+    def update(self, events):
+        if self.temp_set and self.temp_count_ms <= 0:
+            self.active_color = self.inactive_color
+            self.text_img = self.font.render(self.text, True, self.text_color)
+            self.temp_set = False
+        elif self.temp_count_ms > 0:
+            self.temp_count_ms -= self.clock.get_time()
+        elif not self.temp_set:
+            for ev in events:
+                m_pos = pygame.mouse.get_pos()
+                if self.check_collide(m_pos):
+                    if ev.type == pl.MOUSEBUTTONDOWN:
+                        if self.toggle:
+                            self.active_color = self.clicked_color if not self.active else self.inactive_color
+                            self.active = not self.active
+                        else:
+                            self.active_color = self.clicked_color
+                        return True
+                    else:
+                        self.active_color = self.hover_color
+                else:
+                    if self.toggle:
+                        self.active_color = self.clicked_color if self.active else self.inactive_color
+                    else:
+                        self.active_color = self.inactive_color
+
+        self.clock.tick()
+        return False
+        
+    def draw(self, screen):
+        if self.set_border:
+            b_rect = pygame.Rect(self.rect)
+            b_rect.size = (self.size[0]+6, self.size[1]+6)
+            b_rect.topleft = (self.pos[0]-3, self.pos[1]-3)
+            pygame.draw.rect(screen, self.border_color, b_rect)
+        pygame.draw.rect(screen, self.active_color, self.rect)
+        t_size = self.text_img.get_size()
+        screen.blit(self.text_img, (self.pos[0] + self.size[0]/2 - t_size[0]/2, self.pos[1] + self.size[1]/2 - t_size[1]/2))
+
+    def get_rect(self):
+        return self.rect
+
+    def temp_change(self, color, text, time):
+        self.active_color = color
+        self.temp_count_ms = time
+        self.temp_set = True
+        self.text_img = self.font.render(text, True, self.text_color)
+
+    def check_collide(self, pos_):
+        bounds = (self.size[0] + self.pos[0], self.size[1] + self.pos[1])
+
+        if pos_[0] >= self.pos[0] and pos_[0] <= bounds[0] and pos_[1] >= self.pos[1] and pos_[1] <= bounds[1]:
+            return True
+        return False
+
 if __name__ == "__main__":
     pygame.init()
 
-    # Create TextInput-object
-    textinput = TextInput()
-
+    button = Button("Hello World", (120, 60), (100,50), (50,50,50), (100,100,100), (150,150,150), text_size=24, text_color=(255,255,255))
     screen = pygame.display.set_mode((1000, 200))
     clock = pygame.time.Clock()
 
+    screen.fill((225, 225, 225))
     while True:
-        screen.fill((225, 225, 225))
 
         events = pygame.event.get()
+        if button.update(events):
+            button.temp_change((255,0,0), "ERROR", 3000)
         for event in events:
             if event.type == pygame.QUIT:
                 exit()
 
         # Feed it with events every frame
-        textinput.update(events)
-        # Blit its surface onto the screen
-        b = screen.blit(textinput.get_surface(), (10, 10))
-
+        
+        button.draw(screen)
         pygame.display.update()
         clock.tick(30)
