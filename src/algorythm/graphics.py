@@ -123,11 +123,11 @@ def main():
     font_hint2 = pygame.font.SysFont(None, 22, italic=True)
 
 
-    hint_imgs = [font_hint.render('Key Hints:', True, WHITE, INVIS),
-        font_hint2.render('Press S for Settings', True, WHITE, INVIS),
-        font_hint2.render('Press M to toggle window border', True, WHITE, INVIS),
-        font_hint2.render('Press L to toggle layout', True, WHITE, INVIS),
-        font_hint2.render('Press H to toggle key hints', True, WHITE, INVIS)]
+    hint_imgs = [font_hint.render('Key Hints:', True, WHITE),
+        font_hint2.render('Press S for Settings', True, WHITE),
+        font_hint2.render('Press M to toggle window border', True, WHITE),
+        font_hint2.render('Press L to toggle layout', True, WHITE),
+        font_hint2.render('Press H to toggle key hints', True, WHITE)]
 
     # Song Desciption Text
     # Allow for custom fonts in future
