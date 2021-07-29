@@ -134,6 +134,7 @@ class Settings:
         music_img = font.render('Music Properties', True, WHITE, BACK_COLOR)
         font_hint = pygame.font.SysFont(None, 24, italic=True)
         hint_img = font_hint.render("Press save to confirm values.", True, GRAY, BACK_COLOR)
+        hint2_img = font_hint.render("Try setting a color to \"INV\".", True, GRAY, BACK_COLOR)
         preview_img = font.render('Visualizer Preview', True, WHITE, BACK_COLOR)
         
         # Option text
@@ -150,12 +151,12 @@ class Settings:
             font_options.render('Bar Gap:', True, WHITE, BACK_COLOR),
             font_options.render('Bar Count:', True, WHITE, BACK_COLOR),
             font_options.render('Bar Color (Hex):', True, WHITE, BACK_COLOR),
-            font_options.render('Background Color:', True, WHITE, BACK_COLOR),
+            font_options.render('Background Color (Hex):', True, WHITE, BACK_COLOR),
             font_options.render('Dynamic Bar Color:', True, WHITE, BACK_COLOR)]
 
         song_opt_imgs = [font_options.render('Artist Text Size:', True, WHITE, BACK_COLOR),
             font_options.render('Title Text Size:', True, WHITE, BACK_COLOR),
-            font_options.render('Text Color:', True, WHITE, BACK_COLOR),
+            font_options.render('Text Color (Hex):', True, WHITE, BACK_COLOR),
             font_options.render('Display Artist:', True, WHITE, BACK_COLOR),
             font_options.render("Display Title:", True, WHITE, BACK_COLOR),
             font_options.render('Display Cover Art:', True, WHITE, BACK_COLOR)]
@@ -330,7 +331,7 @@ class Settings:
             if song_boxes[2].update(events):
                 self.enable_cover = not self.enable_cover
 
-            screen.fill( BACK_COLOR )
+            screen.fill(BACK_COLOR)
             
             for i, lb in enumerate(layout_boxes):
                 if lb.update(events):
@@ -343,6 +344,7 @@ class Settings:
             screen.blit(title_img, (20, 20))
             screen.blit(vert_prop_img, (x_pos, 20))
             screen.blit(hint_img, (x_pos, 45))
+            screen.blit(hint2_img, (x_pos*2, 45))
             screen.blit(music_img, (x_pos*2, 20))
 
             # Display visualizer options
