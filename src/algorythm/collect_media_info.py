@@ -85,7 +85,6 @@ def generate_colors(count=0):
         colors = generate_colors_from_img(pil_img, count)
         return {'time_per_beat':time_per_beat*time_sig, 'colors':colors, 'album_art':pil_img}
     except:
-        print("Could not retrieve cover art.")
         return err
   
 if __name__ == '__main__':
