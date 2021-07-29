@@ -17,6 +17,7 @@ import win32gui
 import algorythm.backend as backend
 from algorythm.settings import Settings, rgb_to_hex, hex_to_rgb
 from algorythm.bars import AudioBar, DualBar, InvertedBar
+from algorythm.menu import draw_menu 
 
 def build_bars(settings, width):
     bars = []
@@ -110,6 +111,7 @@ def main():
     logo_img = pygame.image.load('logo.png')
     pygame.display.set_icon(logo_img)
     clock = pygame.time.Clock()
+       
 
     # Win32 Layered window (From https://stackoverflow.com/questions/550001/fully-transparent-windows-in-pygame)
     hwnd = pygame.display.get_wm_info()["window"]
@@ -142,6 +144,18 @@ def main():
     # Create thread for getting song info
     t = threading.Thread(target=get_song_info)
     t.start()
+
+    # Load song info while menu runs
+    # Draw main menu
+    selection = draw_menu(screen, clock, size)
+    if selection == 1:
+        displaySettings = True
+    elif selection == 2:
+        pygame.quit()
+        exit()
+    else:
+        displaySettings = False
+
     t.join()
     
 
@@ -180,9 +194,6 @@ def main():
     # Main PyGame render loop
     run = True
     border = True
-    displaySettings = False
-    # display menu on start up
-    displayMainMenu = True
     last_song_title = txt_title
     color_index = 0
     t = None
@@ -276,10 +287,6 @@ def main():
                 settings.b_height = size[1] - info_height
                 bars = build_bars(settings, size[0])
             settings.save("algorythm_settings")
-
-        if displayMainMenu:
-            # draw menu
-            menu.draw(screen, clock, size)
              
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
         if settings.dyn_color and cover_obj['colors'] is not None and len(cover_obj['colors']) > 1:
