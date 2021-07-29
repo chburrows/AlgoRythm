@@ -111,8 +111,6 @@ def main():
 
     screen = pygame.display.set_mode(size, RESIZABLE)
     pygame.display.set_caption("AlgoRythm")
-    logo_img = pygame.image.load('logo.png')
-    pygame.display.set_icon(logo_img)
     clock = pygame.time.Clock()
        
 
