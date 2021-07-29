@@ -1,6 +1,5 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-import requests
 
 #  establish app credentials
 cid = '510b8faf01ab4ede9c41c90750fd84aa'
