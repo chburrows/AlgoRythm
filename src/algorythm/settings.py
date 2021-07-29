@@ -13,7 +13,7 @@ class Settings:
             normalization = 50, smoothing = 15, multiplier = 25, 
             b_width = 15, b_height = 0, b_gap = 2, b_count = 150, b_color = (255, 255, 255), 
             artist_size = 68, title_size = 54, text_color = (255, 255, 255),
-            layout = 0, size = (1200, 600), bkg_color = (1,0,1),
+            layout = 0, size = (1300, 800), bkg_color = (0,0,0),
             dyn_color = False, en_artist=True, en_song=True, en_cover=True
         ):
         # All are public
