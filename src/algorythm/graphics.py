@@ -1,4 +1,4 @@
-from math import ceil,sqrt
+from math import ceil, sqrt
 from os.path import isfile
 
 from pygame.constants import RESIZABLE
@@ -7,7 +7,6 @@ import algorythm.collect_media_info as media
 
 import pygame
 import threading
-from PIL import Image
 
 #pywin32
 import win32api 
@@ -16,8 +15,9 @@ import win32gui
 
 import algorythm.backend as backend
 from algorythm.settings import Settings, rgb_to_hex, hex_to_rgb
-from algorythm.bars import AudioBar, DualBar, InvertedBar
 from algorythm.menu import draw_menu 
+from algorythm.bars import AudioBar, DualBar, InvertedBar, RadialBar
+
 
 def build_bars(settings, width):
     bars = []
@@ -30,15 +30,19 @@ def build_bars(settings, width):
         # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
         settings.b_width = ceil((width - (settings.b_count * settings.b_gap)) / len(backend.last_freqs))
         settings.b_width = 1 if settings.b_width <= 0 else settings.b_width
-        if layout == 0:
-            for i in range(len(backend.last_freqs)):
-                bars.append(AudioBar(settings, i))
-        elif layout == 1:
+        #TODO - replace if/else ladder with layout dict
+        if layout == 1:
             for i in range(len(backend.last_freqs)):
                 bars.append(InvertedBar(settings, i))
-        else:
+        elif layout == 2:
             for i in range(len(backend.last_freqs)):
                 bars.append(DualBar(settings, i))
+        elif layout == 3:
+            for i in range(len(backend.last_freqs)):
+                bars.append(RadialBar(settings, i))
+        else:
+            for i in range(len(backend.last_freqs)):
+                bars.append(AudioBar(settings, i))
     return bars
 
 def get_song_info():
@@ -242,7 +246,7 @@ def main():
                     else:
                         screen = pygame.display.set_mode(size, pygame.NOFRAME)
                 elif event.key == pygame.K_l:
-                    settings.layout = (settings.layout + 1) % 3
+                    settings.layout = (settings.layout + 1) % 4
                     bars = build_bars(settings, size[0])
                 elif event.key == pygame.K_h:
                     display_hints = not display_hints
