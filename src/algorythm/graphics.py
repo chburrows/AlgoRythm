@@ -150,11 +150,13 @@ def main():
     selection = draw_menu(screen, clock, size)
     if selection == 1:
         displaySettings = True
-    elif selection == 2:
+    elif selection == 3:
         pygame.quit()
         exit()
     else:
         displaySettings = False
+
+    size = settings.size = screen.get_size()
 
     t.join()
     
