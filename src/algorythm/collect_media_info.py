@@ -67,24 +67,25 @@ def generate_colors_from_img(img, num_colors):
 
 def generate_colors(count=0):
     curr_media_info = collect_title_artist()
+
+    err = {'time_per_beat':1, 'colors':None, 'album_art':None}
     # Check if no currently playing track was found
     if curr_media_info == ["N/A", "N/A"] or '' in curr_media_info:
-        return {'time_per_beat':1, 'colors':None, 'album_art':None}
+        return err
 
-    track_id = sp.search_for_id(*curr_media_info)
-    if track_id is None:
-        # Ensure that track exists
-        return {'time_per_beat':1, 'colors':None, 'album_art':None}
-
-    track_img_url = sp.get_album_art(track_id)
-    pil_img = get_background_img(track_img_url)
-    features = sp.get_audio_features(track_id)
-    tempo = float(features['track']['tempo'])
-    time_per_beat = 60.0 / tempo # in sec
-    time_sig = features['track']['time_signature']
-    count = time_sig if count == 0 else count
-    colors = generate_colors_from_img(pil_img, count)
-    return {'time_per_beat':time_per_beat*time_sig, 'colors':colors, 'album_art':pil_img}
+    try:
+        track_id = sp.search_for_id(*curr_media_info)
+        track_img_url = sp.get_album_art(track_id)
+        pil_img = get_background_img(track_img_url)
+        features = sp.get_audio_features(track_id)
+        tempo = float(features['track']['tempo'])
+        time_per_beat = 60.0 / tempo # in sec
+        time_sig = features['track']['time_signature']
+        count = time_sig if count == 0 else count
+        colors = generate_colors_from_img(pil_img, count)
+        return {'time_per_beat':time_per_beat*time_sig, 'colors':colors, 'album_art':pil_img}
+    except:
+        return err
   
 if __name__ == '__main__':
     print(generate_colors())
