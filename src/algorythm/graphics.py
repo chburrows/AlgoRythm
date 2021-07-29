@@ -30,7 +30,6 @@ def build_bars(settings, width):
         # right now theres as many bars as frequencies, but they could be grouped (averaged?) to create fewer bars here
         settings.b_width = ceil((width - (settings.b_count * settings.b_gap)) / len(backend.last_freqs))
         settings.b_width = 1 if settings.b_width <= 0 else settings.b_width
-        #TODO - replace if/else ladder with layout dict
         if layout == 1:
             for i in range(len(backend.last_freqs)):
                 bars.append(InvertedBar(settings, i))
