@@ -279,7 +279,7 @@ def main():
 
         if displayMainMenu:
             # draw menu
-            menu.draw(screen, clock, size)
+            Menu.draw(screen, clock, size)
              
         #update bars based on levels and multiplier - have to adjust if fewer bars are used
         if settings.dyn_color and cover_obj['colors'] is not None and len(cover_obj['colors']) > 1:
