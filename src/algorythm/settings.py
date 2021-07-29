@@ -408,8 +408,13 @@ class Settings:
             for lb in layout_boxes: lb.draw(screen)
 
             # Display preview
-            for bar in p_bars:
-                bar.draw(screen)
+            for i,bar in enumerate(p_bars):
+                if i == len(p_bars) - 1 and self.layout == 3:
+                    #Check if current bar is last bar in radial layout to display overlapping circle
+                    bar.draw(screen, True)
+                else:
+                    bar.draw(screen)
+
             pr = preview_img.get_rect()
             pr.centerx = x_pos//2
             pr.bottom = height*2//3 - 50
