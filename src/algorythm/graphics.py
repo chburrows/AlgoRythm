@@ -256,9 +256,9 @@ def main():
                 font_artist = pygame.font.SysFont(custom_font, settings.artist_size, bold=True)
                 font_title = pygame.font.SysFont(custom_font, settings.title_size, bold=True)
                 song_fonts = font_artist, font_title
-                default_cover = get_default_cover(font_artist, info_height)
                 artist_img, title_img = get_song_imgs(settings, song_fonts)
                 info_height = artist_img.get_height() + title_img.get_height()
+                default_cover = get_default_cover(font_artist, info_height)
                 if temp_text[:2] != (settings.artist_size, settings.title_size):
                     settings.b_height = size[1] - info_height
                     cover_img = pygame.transform.smoothscale(song_cover, (info_height,info_height))
