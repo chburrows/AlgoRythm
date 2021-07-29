@@ -1,4 +1,4 @@
-from math import ceil, sqrt, cos, sin, pi
+from math import ceil, sqrt
 from os.path import isfile
 
 from pygame.constants import RESIZABLE
@@ -7,7 +7,6 @@ import algorythm.collect_media_info as media
 
 import pygame
 import threading
-from PIL import Image
 
 #pywin32
 import win32api 
@@ -16,30 +15,7 @@ import win32gui
 
 import algorythm.backend as backend
 from algorythm.settings import Settings, rgb_to_hex, hex_to_rgb
-from algorythm.bars import AudioBar, DualBar, InvertedBar
-
-class RadialBar(AudioBar):
-    def update(self, settings, intensity, dt, text_gap, color=None):
-        newPos = self.max_height * (1 - intensity * self.index / 20)
-        accel = (newPos - self.draw_y) * settings.smoothing
-        self.draw_y += accel * dt
-        self.draw_y = max(0, min(self.max_height, self.draw_y))
-        bar_height = self.max_height - self.draw_y
-
-        #Make radius relative to screen size?
-        #r = ceil(min(size[0], size[1]) / 15)
-        r = 30
-        theta = (2 * pi * self.index / settings.b_count) - (pi / 4)
-        #Use window center or account for info gap?
-        #self.c = (ceil(size[0] / 2), ceil((size[1] - text_gap) / 2))
-        self.c = (ceil(size[0] / 2), ceil(size[1] / 2))
-        self.inner = (r * cos(theta), r * sin(theta))
-        self.outer = (max(r, 2 * bar_height) * cos(theta), max(r, 2 * bar_height) * sin(theta))
-        if color is not None:
-            self.color = color
-    def draw(self, screen):
-        #width adjustment?
-        pygame.draw.line(screen, self.color, (self.c[0] + self.inner[0], self.c[1] + self.inner[1]), (self.c[0] + self.outer[0], self.c[1] + self.outer[1]), ceil(self.width / 3))
+from algorythm.bars import AudioBar, DualBar, InvertedBar, RadialBar
 
 def build_bars(settings, width):
     bars = []
