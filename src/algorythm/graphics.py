@@ -51,7 +51,6 @@ def get_cover_obj():
     if pil_img is not None:
         try:
             song_cover = pygame.image.fromstring(pil_img.tobytes(), pil_img.size, pil_img.mode).convert()
-            cover_changed = True
         except ValueError:
             song_cover = default_cover
     else:
@@ -71,14 +70,15 @@ def get_song_imgs(settings, fonts):
 def mix_colors(colors, mix):
     return [int(sqrt((1 - mix) * colors[0][i]**2 + mix * colors[1][i]**2)) for i in range(3)]
 
-def get_default_cover(font, color):
+def get_default_cover(font, cover_size):
     #default album art
-    default_cover_size = 64
-    default_cover = pygame.Surface((default_cover_size,default_cover_size))
-    default_cover.fill((0,0,0))
-    default_cover_text = font.render("N/A", True, color, INVIS)
-    default_cover_text = pygame.transform.scale(default_cover_text, (default_cover_size,int(default_cover_size * .7)))
-    default_cover.blit(default_cover_text, (0, (default_cover_size - default_cover_text.get_height()) / 2))
+    default_cover = pygame.Surface((cover_size,cover_size))
+    default_cover.fill(WHITE)
+    default_cover_text = font.render("?", True, (0,0,0), WHITE)
+    r = default_cover.get_rect()
+    r.size = default_cover_text.get_size()
+    r.center = [cover_size//2]*2
+    default_cover.blit(default_cover_text, r)
     return default_cover
 
 # Globals
@@ -138,20 +138,22 @@ def main():
     font_title = pygame.font.SysFont(custom_font, title_size, bold=True)    
     song_fonts = font_artist, font_title
 
-    default_cover = get_default_cover(font_artist, settings.text_color)
 
     # Create thread for getting song info
     t = threading.Thread(target=get_song_info)
     t.start()
     t.join()
     
-    # Get cover obj
-    # And set song cover
-    get_cover_obj()
 
     # Render default text images
     artist_img, title_img = get_song_imgs(settings, song_fonts)
     info_height = artist_img.get_height() + title_img.get_height()
+
+    # Create Default Cover
+    default_cover = get_default_cover(font_artist, info_height)
+
+    # Get cover obj and set song cover (default if err)
+    get_cover_obj()
 
     if song_cover is not None:
         cover_img = pygame.transform.smoothscale(song_cover, (info_height,info_height))
@@ -254,7 +256,7 @@ def main():
                 font_artist = pygame.font.SysFont(custom_font, settings.artist_size, bold=True)
                 font_title = pygame.font.SysFont(custom_font, settings.title_size, bold=True)
                 song_fonts = font_artist, font_title
-                default_cover = get_default_cover(font_artist, settings.text_color)
+                default_cover = get_default_cover(font_artist, info_height)
                 artist_img, title_img = get_song_imgs(settings, song_fonts)
                 info_height = artist_img.get_height() + title_img.get_height()
                 if temp_text[:2] != (settings.artist_size, settings.title_size):
