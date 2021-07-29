@@ -318,8 +318,12 @@ def main():
                 screen.blit(img, (size[0]*.75-30 ,15+(img.get_height()*index)))
         
         # Draw each bars
-        for bar in bars:
-            bar.draw(screen)
+        for i,bar in enumerate(bars):
+            if i == len(bars) - 1 and settings.layout == 3:
+                #Check if current bar is last bar in radial layout to display overlapping circle
+                bar.draw(screen, True)
+            else:
+                bar.draw(screen)
 
         # Print song text
         if settings.enable_artist:

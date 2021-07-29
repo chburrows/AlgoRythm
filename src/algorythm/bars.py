@@ -81,11 +81,11 @@ class RadialBar(AudioBar):
             self.color = color
         self.radius = r
         self.bg_color = settings.bkg_color
-    def draw(self, screen):
+    def draw(self, screen, last=False):
         #width adjustment?
         pygame.draw.line(screen, self.color, (self.c[0] + self.inner[0], self.c[1] + self.inner[1]), (self.c[0] + self.outer[0], self.c[1] + self.outer[1]), ceil(self.width / 3))
-        pygame.draw.circle(screen, self.bg_color, self.c, self.radius * 1.1)
-
+        if last:
+            pygame.draw.circle(screen, self.bg_color, self.c, self.radius * 1.1)
 # For preview only
 def build_bars(settings, count):
     bars = []
