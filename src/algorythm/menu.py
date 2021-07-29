@@ -27,6 +27,12 @@ def draw_menu(screen, clock, size):
         for event in events:
             if event.type == pygame.QUIT:
                 return len(options)-1
+            elif event.type == pygame.WINDOWRESIZED:
+                size = screen.get_size()
+                for i, opt in enumerate(options):
+                    opt.pos = (size[0]//2 - but_size[0]//2, y_pos+60*i)
+                    opt.rect.topleft = opt.pos
+
 
         for i, opt in enumerate(options):
             if opt.update(events):
