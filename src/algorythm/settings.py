@@ -188,11 +188,12 @@ class Settings:
         # Preview
         def build_preview_bars():
             p_width = width//3 - 40
-            preview_bars = build_bars(self, p_width//(self.b_gap+self.b_width))
+            count = p_width//(self.b_gap+self.b_width) if self.layout != 3 else self.b_count
+            preview_bars = build_bars(self, count)
             for bar in preview_bars:
                 bar.max_height = bar.draw_y = height//3
                 bar.x += 20
-                bar.update(self, random.gauss(.5, 0.15)*2/(bar.index +1) * self.multiplier, 0.015, 30, color=self.b_color, height=height//3)
+                bar.update(self, random.gauss(.5, 0.15)*2/(bar.index +1) * self.multiplier, 0.015, 30, color=self.b_color, height=height//3, width=p_width)
             return preview_bars
 
         p_bars = build_preview_bars()
