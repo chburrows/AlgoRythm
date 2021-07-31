@@ -19,7 +19,7 @@ Project Repository link: https://github.com/cburrows1/AlgoRythm
 - On Windows enable Stereo mix (or skip this step and Algorythm will visualize your default input device):
   - Control panel -> Hardware and Sound -> Sound -> Recording -> Stereo Mix -> \*Right Click\* Enable
   - If Stereo Mix does not appear under recording devices, follow the Driver Installation Instructions below
-- Run `pip install -i https://test.pypi.org/simple/ algorythm`
+- Run `pip install algorythm`
 - OR
   - Download the latest wheel package from our [release list](https://github.com/cburrows1/AlgoRythm/releases)
   - Navigate to the downloaded package and install with `pip install <filename>.whl`
@@ -34,7 +34,7 @@ Project Repository link: https://github.com/cburrows1/AlgoRythm
 - If it shows up, then enable it. Otherwise it is necessary to download the driver from Realtek:
 - Download the driver executable (64 bit) from [Realtek](https://www.realtek.com/en/agree-to-download?downloadid=4842c7ef60f190fdf91711cf682f2192) or a [Much Faster Mirror](https://www.lo4d.com/get-file/realtek-high-definition-audio-driver/800c666f4ee6f0464099fbfb5ecba476/)
 - Run the executable and follow the installation instructions
-- Restart Computer and continue with the Algorythm installation instructions above
+- Restart computer and continue with the Algorythm installation instructions above
 
 ## Execution of program
 - Run with `python -m algorythm`
